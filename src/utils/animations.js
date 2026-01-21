@@ -19,7 +19,7 @@ export const fadeInUp = {
 // Stagger container for lists - simplified
 export const staggerContainer = {
   initial: {},
-  whileInView: {
+  animate: {
     transition: {
       staggerChildren: 0.08,
       delayChildren: 0.1
@@ -31,7 +31,7 @@ export const staggerContainer = {
 // Stagger item - simple fade in
 export const staggerItem = {
   initial: { opacity: 0 },
-  whileInView: { 
+  animate: {
     opacity: 1,
     transition: { duration: 0.4, ease: "easeOut" }
   }

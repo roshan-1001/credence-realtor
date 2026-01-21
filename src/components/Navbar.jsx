@@ -21,7 +21,7 @@ const Navbar = () => {
     ];
 
     return (
-        <motion.nav 
+        <motion.nav
             className="fixed w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -32,7 +32,7 @@ const Navbar = () => {
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/" className="flex items-center">
-                            <img src="/assets/Company_Logo_1-removebg-preview.png" alt="Credence Realtor" className="h-12 w-auto" />
+                            <img src="/logo.png" alt="Credence Realtor" className="h-12 w-auto" />
                         </Link>
                     </div>
 
@@ -58,10 +58,10 @@ const Navbar = () => {
                             <Phone size={16} className="text-primary mr-2" />
                             +971 4 591 7373
                         </div>
-                        <a 
-                            href="https://wa.me/971588919223" 
-                            target="_blank" 
-                            rel="noreferrer" 
+                        <a
+                            href="https://wa.me/971588919223"
+                            target="_blank"
+                            rel="noreferrer"
                             className="bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-2.5 px-6 rounded-full transition-colors duration-300 flex items-center gap-2"
                         >
                             <MessageCircle size={18} />
@@ -81,14 +81,14 @@ const Navbar = () => {
             {/* Mobile Menu */}
             <AnimatePresence>
                 {isOpen && (
-                    <motion.div 
+                    <motion.div
                         className="lg:hidden bg-black border-t border-white/10"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <motion.div 
+                        <motion.div
                             className="px-4 pt-4 pb-6 space-y-2"
                             initial="closed"
                             animate="open"
@@ -123,17 +123,17 @@ const Navbar = () => {
                                     </Link>
                                 </motion.div>
                             ))}
-                        <div className="pt-4 space-y-4">
-                            <div className="flex items-center text-white px-3 text-sm font-medium">
-                                <Phone size={16} className="text-primary mr-2" />
-                                +971 4 591 7373
+                            <div className="pt-4 space-y-4">
+                                <div className="flex items-center text-white px-3 text-sm font-medium">
+                                    <Phone size={16} className="text-primary mr-2" />
+                                    +971 4 591 7373
+                                </div>
+                                <a href="https://wa.me/971588919223" className="block w-full text-center bg-green-600 text-white font-bold py-3 px-6 rounded-full">
+                                    WhatsApp Now
+                                </a>
                             </div>
-                            <a href="https://wa.me/971588919223" className="block w-full text-center bg-green-600 text-white font-bold py-3 px-6 rounded-full">
-                                WhatsApp Now
-                            </a>
-                        </div>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
                 )}
             </AnimatePresence>
         </motion.nav>

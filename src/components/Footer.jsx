@@ -46,7 +46,7 @@ const Footer = () => {
         <footer className="font-sans">
 
             {/* 1. CTA Banner (Top Section) */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-black relative overflow-hidden"
                 {...scrollReveal}
             >
@@ -77,8 +77,8 @@ const Footer = () => {
                         </a>
                     </div>
 
-                    <a 
-                        href="tel:+97145917373" 
+                    <a
+                        href="tel:+97145917373"
                         className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors"
                     >
                         <Phone size={18} />
@@ -88,7 +88,7 @@ const Footer = () => {
             </motion.section>
 
             {/* 2. Main Footer (Bottom Section) */}
-            <motion.div 
+            <motion.div
                 className="bg-black py-16 text-white border-t border-white/5"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -96,7 +96,7 @@ const Footer = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 lg:pr-20">
-                    <motion.div 
+                    <motion.div
                         className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 lg:gap-2"
                         initial="initial"
                         whileInView="animate"
@@ -105,12 +105,12 @@ const Footer = () => {
                     >
 
                         {/* Column 1: Company Info & Logo */}
-                        <motion.div 
+                        <motion.div
                             className="col-span-2 lg:col-span-1"
                             variants={staggerItem}
                         >
                             <div className="flex items-center gap-2 mb-6 text-white">
-                                <img src="/assets/Company_Logo_1-removebg-preview.png" alt="Credence Realtor" className="w-[180px] h-auto object-contain" />
+                                <img src="/logo.png" alt="Credence Realtor" className="w-[180px] h-auto object-contain" />
                             </div>
                             <p className="text-sm text-gray-500 leading-relaxed mb-6">
                                 Your trusted partner for premium real estate investments.<br />
@@ -118,9 +118,9 @@ const Footer = () => {
                             </p>
                             <div className="flex gap-4">
                                 {[Instagram, Linkedin, Facebook].map((Icon, i) => (
-                                    <a 
-                                        key={i} 
-                                        href="#" 
+                                    <a
+                                        key={i}
+                                        href="#"
                                         className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white hover:bg-primary hover:text-white transition-colors duration-300"
                                     >
                                         <Icon size={18} />

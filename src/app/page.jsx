@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { getPaginatedProperties, formatPrice } from '@/lib/properties';
 import { fadeInUp, fadeIn, scrollReveal, staggerContainer, staggerItem, hoverLift, fadeInOnScroll } from '@/utils/animations';
 import Hotspots from '@/components/Hotspots';
+import { openWhatsApp } from '@/utils/whatsappRedirect';
 
 const HomeContent = () => {
     const pathname = usePathname();
@@ -15,6 +16,51 @@ const HomeContent = () => {
     const [recentLaunches, setRecentLaunches] = useState([]);
     const [topPicks, setTopPicks] = useState([]);
     const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+    const [contactFormData, setContactFormData] = useState({
+        name: '',
+        countryCode: '+971',
+        phone: '',
+        email: '',
+        preferredDate: '',
+        preferredTime: '',
+        message: ''
+    });
+
+    const COUNTRY_CODES = [
+        { code: '+971', country: 'UAE', flag: '🇦🇪' },
+        { code: '+91', country: 'India', flag: '🇮🇳' },
+        { code: '+1', country: 'USA', flag: '🇺🇸' },
+        { code: '+44', country: 'UK', flag: '🇬🇧' },
+        { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+        { code: '+974', country: 'Qatar', flag: '🇶🇦' },
+        { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
+        { code: '+968', country: 'Oman', flag: '🇴🇲' },
+        { code: '+973', country: 'Bahrain', flag: '🇧🇭' },
+    ];
+
+    // Generate time slots in 30-minute intervals
+    const generateTimeSlots = () => {
+        const slots = [];
+        for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const hourStr = hour.toString().padStart(2, '0');
+                const minuteStr = minute.toString().padStart(2, '0');
+                const time24 = `${hourStr}:${minuteStr}`;
+
+                // Convert to 12-hour format for display
+                const period = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                const time12 = `${hour12}:${minuteStr} ${period}`;
+
+                slots.push({ value: time24, label: time12 });
+            }
+        }
+        return slots;
+    };
+
+    const TIME_SLOTS = generateTimeSlots();
+
+    const WHATSAPP_NUMBER = '919403663624';
 
     useEffect(() => {
         const hash = window.location.hash || searchParams?.get('hash');
@@ -77,29 +123,29 @@ const HomeContent = () => {
 
 
     const categories = [
-        { 
-            name: "Waterfront Communities", 
+        {
+            name: "Waterfront Communities",
             desc: "Beachfront living with stunning sea views",
             filterType: 'category',
             filterValue: 'Waterfront',
             image: "/assets/villa.png"
         },
-        { 
-            name: "Off-Plan Properties", 
+        {
+            name: "Off-Plan Properties",
             desc: "Early-bird prices with flexible payment plans",
             filterType: 'type',
             filterValue: 'Off-Plan',
             image: "/assets/villa.png"
         },
-        { 
-            name: "Affordable Communities", 
+        {
+            name: "Affordable Communities",
             desc: "Smart investments with high rental yields",
             filterType: 'category',
             filterValue: 'Affordable',
             image: "/assets/villa.png"
         },
-        { 
-            name: "Luxury Branded Residences", 
+        {
+            name: "Luxury Branded Residences",
             desc: "World-class brands and premium finishes",
             filterType: 'category',
             filterValue: 'Luxury',
@@ -168,6 +214,60 @@ const HomeContent = () => {
 
     const [activeTestimonial, setActiveTestimonial] = useState(0);
 
+    const handleContactFormChange = (e) => {
+        const { name, value } = e.target;
+        setContactFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const formatTime12Hour = (time24) => {
+        if (!time24) return '';
+        const [hourStr, minuteStr] = time24.split(':');
+        const hour = parseInt(hourStr);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${hour12}:${minuteStr} ${period}`;
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const handleContactFormSubmit = (e) => {
+        e.preventDefault();
+
+        const whatsappData = {
+            'Name': contactFormData.name,
+            'Phone': `${contactFormData.countryCode} ${contactFormData.phone}`,
+            'Email': contactFormData.email,
+            'Preferred Date': contactFormData.preferredDate ? formatDate(contactFormData.preferredDate) : 'Not specified',
+            'Preferred Time': contactFormData.preferredTime ? formatTime12Hour(contactFormData.preferredTime) : 'Not specified',
+            'Message': contactFormData.message
+        };
+
+        openWhatsApp(WHATSAPP_NUMBER, whatsappData);
+
+        // Reset form
+        setContactFormData({
+            name: '',
+            countryCode: '+971',
+            phone: '',
+            email: '',
+            preferredDate: '',
+            preferredTime: '',
+            message: ''
+        });
+    };
+
     return (
         <div className="bg-white overflow-hidden font-sans">
             {/* 1. Hero Section */}
@@ -178,7 +278,7 @@ const HomeContent = () => {
                 </div>
 
                 <div className="container mx-auto px-4 md:px-6 relative z-10 pt-24 md:pt-34 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="max-w-3xl"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -220,7 +320,7 @@ const HomeContent = () => {
             </section>
 
             {/* 2. Why Invest */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -228,7 +328,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -239,13 +339,13 @@ const HomeContent = () => {
                         </p>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         className="grid grid-cols-1 md:grid-cols-4 gap-8"
                         {...staggerContainer}
                     >
                         {benefits.map((benefit, i) => (
-                            <motion.div 
-                                key={i} 
+                            <motion.div
+                                key={i}
                                 className="p-8 border border-gray-100 rounded-2xl bg-white hover:shadow-xl hover:border-primary/20 transition-all duration-300"
                                 variants={staggerItem}
                                 {...hoverLift}
@@ -262,7 +362,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 3. Most Recent Launches */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-gray-50"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -270,7 +370,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -292,22 +392,22 @@ const HomeContent = () => {
                             ))}
                         </div>
                     ) : recentLaunches.length > 0 ? (
-                        <motion.div 
+                        <motion.div
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
                             {...staggerContainer}
                         >
                             {recentLaunches.map((item) => (
-                                <motion.div 
-                                    key={item.id} 
+                                <motion.div
+                                    key={item.id}
                                     className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300"
                                     variants={staggerItem}
                                     {...hoverLift}
                                 >
                                     <div className="h-64 relative overflow-hidden">
-                                        <img 
-                                            src={item.mainImage || "/assets/villa.png"} 
-                                            alt={item.title} 
-                                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                                        <img
+                                            src={item.mainImage || "/assets/villa.png"}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                         <div className="absolute bottom-4 left-4 text-white">
@@ -335,8 +435,8 @@ const HomeContent = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Link 
-                                            href={`/properties/${item.id}`} 
+                                        <Link
+                                            href={`/properties/${item.id}`}
                                             className="w-full py-2.5 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-black transition-colors block text-center"
                                         >
                                             Inquire
@@ -354,7 +454,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 4. Browse Properties (Collections) */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -362,7 +462,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -371,7 +471,7 @@ const HomeContent = () => {
                         <p className="text-gray-text">Explore our curated collections tailored to different investment goals and lifestyles.</p>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         className="grid grid-cols-1 md:grid-cols-2 gap-8"
                         {...staggerContainer}
                     >
@@ -379,7 +479,7 @@ const HomeContent = () => {
                             // Build the URL with appropriate filter
                             const filterParam = cat.filterType === 'type' ? 'type' : 'category';
                             const filterUrl = `/properties?${filterParam}=${encodeURIComponent(cat.filterValue)}`;
-                            
+
                             return (
                                 <motion.div
                                     key={i}
@@ -390,20 +490,20 @@ const HomeContent = () => {
                                         href={filterUrl}
                                         className="relative h-72 rounded-2xl overflow-hidden group cursor-pointer block"
                                     >
-                                        <img 
-                                            src={cat.image} 
+                                        <img
+                                            src={cat.image}
                                             alt={cat.name}
-                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
-                                    <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-colors" />
-                                    <div className="absolute bottom-0 left-0 p-8">
-                                        <h3 className="text-2xl font-bold text-white mb-2">{cat.name}</h3>
-                                        <p className="text-gray-300 text-sm">{cat.desc}</p>
-                                        <div className="mt-4 flex items-center gap-2 text-white/80 group-hover:text-white transition-colors">
-                                            <span className="text-sm font-medium">Explore Properties</span>
-                                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                        <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-colors" />
+                                        <div className="absolute bottom-0 left-0 p-8">
+                                            <h3 className="text-2xl font-bold text-white mb-2">{cat.name}</h3>
+                                            <p className="text-gray-300 text-sm">{cat.desc}</p>
+                                            <div className="mt-4 flex items-center gap-2 text-white/80 group-hover:text-white transition-colors">
+                                                <span className="text-sm font-medium">Explore Properties</span>
+                                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                            </div>
                                         </div>
-                                    </div>
                                     </Link>
                                 </motion.div>
                             );
@@ -413,7 +513,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 5. Explore by Developer */}
-            <motion.section 
+            <motion.section
                 className="bg-white pt-20"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -422,7 +522,7 @@ const HomeContent = () => {
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
                     {/* Top Header & Logos */}
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-12"
                         {...fadeInUp}
                     >
@@ -431,14 +531,14 @@ const HomeContent = () => {
 
                         <div className="flex flex-wrap justify-center gap-6 mb-16">
                             {developerLogos.map((dev, i) => (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     className="w-48 h-20 border border-secondary/20 rounded-lg flex items-center justify-center p-4 hover:border-[#C5A365] transition-colors bg-white"
                                 >
-                                    <img 
-                                        src={dev.img} 
-                                        alt={dev.name} 
-                                        className="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
+                                    <img
+                                        src={dev.img}
+                                        alt={dev.name}
+                                        className="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
                                     />
                                 </div>
                             ))}
@@ -449,7 +549,7 @@ const HomeContent = () => {
                 {/* Map Section */}
                 <div className="bg-white py-16 text-black relative overflow-hidden">
                     <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-7xl">
-                        <Hotspots 
+                        <Hotspots
                             title="Choose from Top Developers"
                             showTitle={true}
                             filterOptions={["All", "Villa", "2 BHK", "3 BHK", "1 BHK"]}
@@ -460,7 +560,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 6. Handpicked Selection (Dark) */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-secondary text-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -468,7 +568,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -490,22 +590,22 @@ const HomeContent = () => {
                             ))}
                         </div>
                     ) : topPicks.length > 0 ? (
-                        <motion.div 
+                        <motion.div
                             className="grid grid-cols-1 md:grid-cols-3 gap-8"
                             {...staggerContainer}
                         >
                             {topPicks.map((item) => (
-                                <motion.div 
-                                    key={item.id} 
+                                <motion.div
+                                    key={item.id}
                                     className="bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-colors"
                                     variants={staggerItem}
                                     {...hoverLift}
                                 >
                                     <div className="h-64 relative">
-                                        <img 
-                                            src={item.mainImage || "/assets/villa.png"} 
-                                            alt={item.title} 
-                                            className="w-full h-full object-cover" 
+                                        <img
+                                            src={item.mainImage || "/assets/villa.png"}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover"
                                         />
                                         <div className="absolute top-4 left-4 bg-primary text-black text-xs font-bold px-3 py-1 rounded">Top Pick</div>
                                     </div>
@@ -533,8 +633,8 @@ const HomeContent = () => {
                                                     AED {formatPrice(item.price)}
                                                 </span>
                                             </div>
-                                            <Link 
-                                                href={`/properties/${item.id}`} 
+                                            <Link
+                                                href={`/properties/${item.id}`}
                                                 className="px-6 py-2 bg-white text-black font-bold rounded hover:bg-primary transition-colors text-sm"
                                             >
                                                 Inquire
@@ -553,7 +653,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 7. Market Insights */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -562,7 +662,7 @@ const HomeContent = () => {
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-7xl">
                     <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 items-center">
-                        <motion.div 
+                        <motion.div
                             className="lg:w-1/2"
                             {...fadeInUp}
                         >
@@ -589,15 +689,15 @@ const HomeContent = () => {
                             </div>
                         </motion.div>
 
-                        <motion.div 
+                        <motion.div
                             className="lg:w-1/2 w-full"
                             {...fadeInUp}
                         >
-                            <motion.div 
+                            <motion.div
                                 className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                                 {...staggerContainer}
                             >
-                                <motion.div 
+                                <motion.div
                                     className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                     variants={staggerItem}
                                     {...hoverLift}
@@ -609,7 +709,7 @@ const HomeContent = () => {
                                     <p className="font-bold text-secondary text-sm mb-1">Property Value Growth</p>
                                     <p className="text-xs text-gray-400">Average annual appreciation</p>
                                 </motion.div>
-                                <motion.div 
+                                <motion.div
                                     className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                     variants={staggerItem}
                                     {...hoverLift}
@@ -621,7 +721,7 @@ const HomeContent = () => {
                                     <p className="font-bold text-secondary text-sm mb-1">Population Growth</p>
                                     <p className="text-xs text-gray-400">Expected by 2040</p>
                                 </motion.div>
-                                <motion.div 
+                                <motion.div
                                     className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                     variants={staggerItem}
                                     {...hoverLift}
@@ -633,7 +733,7 @@ const HomeContent = () => {
                                     <p className="font-bold text-secondary text-sm mb-1">Transactions 2023</p>
                                     <p className="text-xs text-gray-400">Record-breaking year</p>
                                 </motion.div>
-                                <motion.div 
+                                <motion.div
                                     className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                     variants={staggerItem}
                                     {...hoverLift}
@@ -652,7 +752,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 7. Testimonials (Slider) */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -660,7 +760,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 max-w-7xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -668,12 +768,12 @@ const HomeContent = () => {
                         <h2 className="text-4xl md:text-5xl font-display text-secondary">Happy Clients</h2>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         className="max-w-4xl mx-auto relative"
                         {...fadeInOnScroll}
                     >
                         {/* Slider Content */}
-                        <div 
+                        <div
                             className="bg-[#F9F9F9] p-8 md:p-12 rounded-2xl shadow-sm text-center relative overflow-hidden"
                         >
                             {/* Quote Icon */}
@@ -740,7 +840,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 9. FAQ */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -748,7 +848,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-4xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-16"
                         {...fadeInUp}
                     >
@@ -766,8 +866,8 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 10. Contact Us Form */}
-            <motion.section 
-                id="contact" 
+            <motion.section
+                id="contact"
                 className="py-24 bg-[#F9F7F2]"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -775,7 +875,7 @@ const HomeContent = () => {
                 transition={scrollReveal.transition}
             >
                 <div className="container mx-auto px-4 md:px-6 max-w-4xl">
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-12"
                         {...fadeInUp}
                     >
@@ -786,20 +886,19 @@ const HomeContent = () => {
                         </p>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100"
                         {...fadeInUp}
                     >
-                        <form className="space-y-6">
-                            {/* Hidden Access Key Input for Web3Forms (To be uncommented/added later) */}
-                            {/* <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE" /> */}
-
+                        <form onSubmit={handleContactFormSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-secondary mb-2">Name</label>
                                     <input
                                         type="text"
                                         name="name"
+                                        value={contactFormData.name}
+                                        onChange={handleContactFormChange}
                                         placeholder="Your Name"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors"
                                         required
@@ -807,13 +906,29 @@ const HomeContent = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-secondary mb-2">Phone</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        placeholder="Your Phone Number"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors"
-                                        required
-                                    />
+                                    <div className="flex gap-2">
+                                        <select
+                                            name="countryCode"
+                                            value={contactFormData.countryCode}
+                                            onChange={handleContactFormChange}
+                                            className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors cursor-pointer"
+                                        >
+                                            {COUNTRY_CODES.map((country) => (
+                                                <option key={country.code} value={country.code}>
+                                                    {country.flag} {country.code}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={contactFormData.phone}
+                                            onChange={handleContactFormChange}
+                                            placeholder="Your Phone Number"
+                                            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors"
+                                            required
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -822,19 +937,43 @@ const HomeContent = () => {
                                 <input
                                     type="email"
                                     name="email"
+                                    value={contactFormData.email}
+                                    onChange={handleContactFormChange}
                                     placeholder="Your Email Address"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors"
                                     required
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold text-secondary mb-2">Request Appointment Date/Time</label>
-                                <input
-                                    type="datetime-local"
-                                    name="appointment"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors text-gray-500"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Preferred Date</label>
+                                    <input
+                                        type="date"
+                                        name="preferredDate"
+                                        value={contactFormData.preferredDate}
+                                        onChange={handleContactFormChange}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors cursor-pointer"
+                                        onClick={(e) => e.currentTarget.showPicker?.()}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Preferred Time</label>
+                                    <select
+                                        name="preferredTime"
+                                        value={contactFormData.preferredTime}
+                                        onChange={handleContactFormChange}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors cursor-pointer"
+                                    >
+                                        <option value="">Select Time</option>
+                                        {TIME_SLOTS.map((slot) => (
+                                            <option key={slot.value} value={slot.value}>
+                                                {slot.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -842,6 +981,8 @@ const HomeContent = () => {
                                 <textarea
                                     name="message"
                                     rows="4"
+                                    value={contactFormData.message}
+                                    onChange={handleContactFormChange}
                                     placeholder="How can we help you?"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#C5A365] transition-colors resize-none"
                                     required
@@ -853,7 +994,7 @@ const HomeContent = () => {
                                     type="submit"
                                     className="bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold hover:bg-[#C5A365] transition-all min-w-[200px]"
                                 >
-                                    Send Message
+                                    Send via WhatsApp
                                 </button>
                             </div>
                         </form>
