@@ -13,6 +13,38 @@ interface FilterModalProps {
 
 export default function FilterModal({ isOpen, onClose, filters, onApplyFilters }: FilterModalProps) {
   const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
+  const [developers, setDevelopers] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoadingDevelopers, setIsLoadingDevelopers] = useState(false);
+
+  // Fetch developers for the developer filter
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDevelopers = async () => {
+        setIsLoadingDevelopers(true);
+        try {
+          const res = await fetch('/api/developers?page=1&limit=100&min_projects=1');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success !== false && data.data) {
+              const developersList = data.data
+                .map((dev: any) => ({
+                  id: dev.id,
+                  name: dev.Company?.name || dev.name || '',
+                }))
+                .filter((dev: any) => dev.name)
+                .sort((a: any, b: any) => a.name.localeCompare(b.name));
+              setDevelopers(developersList);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching developers:', err);
+        } finally {
+          setIsLoadingDevelopers(false);
+        }
+      };
+      fetchDevelopers();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     setLocalFilters(filters);
@@ -80,51 +112,62 @@ export default function FilterModal({ isOpen, onClose, filters, onApplyFilters }
         {/* Content */}
         <div className="p-4 md:p-6">
           <div className="flex flex-col gap-6">
-            {/* Property Type */}
+            {/* Developer */}
             <div>
               <label className="block text-black text-sm md:text-base font-medium mb-2">
-                Property Type
+                Developer
               </label>
               <select
-                value={typeof localFilters.type === 'string' ? localFilters.type : ''}
-                onChange={(e) => setLocalFilters({ ...localFilters, type: e.target.value || undefined })}
+                value={localFilters.developer || ''}
+                onChange={(e) => setLocalFilters({ ...localFilters, developer: e.target.value || undefined })}
+                className="w-full py-2.5 md:py-3 px-3 rounded-[4px] border border-[#dddddd] text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#1f2462] focus:border-transparent"
+                disabled={isLoadingDevelopers}
+              >
+                <option value="">All Developers</option>
+                {developers.map((dev) => (
+                  <option key={dev.id} value={dev.name}>
+                    {dev.name}
+                  </option>
+                ))}
+              </select>
+              {isLoadingDevelopers && (
+                <p className="text-xs text-gray-400 mt-1">Loading developers...</p>
+              )}
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="block text-black text-sm md:text-base font-medium mb-2">
+                City
+              </label>
+              <select
+                value={localFilters.city || ''}
+                onChange={(e) => setLocalFilters({ ...localFilters, city: e.target.value || undefined })}
                 className="w-full py-2.5 md:py-3 px-3 rounded-[4px] border border-[#dddddd] text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#1f2462] focus:border-transparent"
               >
-                <option value="">All Types</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="Townhouse">Townhouse</option>
-                <option value="Studio">Studio</option>
-                <option value="Penthouse">Penthouse</option>
-                <option value="Mansion">Mansion</option>
-                <option value="Duplex">Duplex</option>
+                <option value="">All Cities</option>
+                <option value="Dubai">Dubai</option>
+                <option value="Abu_Dhabi">Abu Dhabi</option>
+                <option value="Sharjah">Sharjah</option>
+                <option value="Ajman">Ajman</option>
+                <option value="Ras_Al_Khaimah">Ras Al Khaimah</option>
+                <option value="Fujairah">Fujairah</option>
+                <option value="Umm_Al_Quwain">Umm Al Quwain</option>
               </select>
             </div>
 
-            {/* Bedrooms */}
+            {/* Locality */}
             <div>
               <label className="block text-black text-sm md:text-base font-medium mb-2">
-                Bedrooms
+                Area/Locality
               </label>
-              <select
-                value={localFilters.bedrooms || ''}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setLocalFilters({ 
-                    ...localFilters, 
-                    bedrooms: value ? parseInt(value) : undefined 
-                  });
-                }}
-                className="w-full py-2.5 md:py-3 px-3 rounded-[4px] border border-[#dddddd] text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#1f2462] focus:border-transparent"
-              >
-                <option value="">Any</option>
-                <option value="1">1 Bedroom</option>
-                <option value="2">2 Bedrooms</option>
-                <option value="3">3 Bedrooms</option>
-                <option value="4">4 Bedrooms</option>
-                <option value="5">5 Bedrooms</option>
-                <option value="6">6+ Bedrooms</option>
-              </select>
+              <input
+                type="text"
+                value={localFilters.locality || ''}
+                onChange={(e) => setLocalFilters({ ...localFilters, locality: e.target.value || undefined })}
+                placeholder="e.g., Downtown, Dubai Marina, Business Bay"
+                className="w-full py-2.5 md:py-3 px-3 rounded-[4px] border border-[#dddddd] text-black bg-white placeholder:text-[#9E9E9E] focus:outline-none focus:ring-2 focus:ring-[#1f2462] focus:border-transparent"
+              />
             </div>
 
             {/* Price Range */}

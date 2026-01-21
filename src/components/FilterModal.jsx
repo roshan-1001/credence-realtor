@@ -8,7 +8,8 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
 
     if (!isOpen) return null;
 
-    const handleApply = () => {
+    const handleApply = (e) => {
+        e?.preventDefault?.();
         onApplyFilters(localFilters);
         onClose();
     };
@@ -36,60 +37,6 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
 
                 {/* Filter Content */}
                 <div className="p-6 space-y-6">
-                    {/* Property Type */}
-                    <div>
-                        <label className="block text-sm font-semibold text-secondary mb-3">
-                            Property Type
-                        </label>
-                        <div className="flex flex-wrap gap-3">
-                            {['Ready', 'Off-Plan'].map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => {
-                                        setLocalFilters(prev => ({
-                                            ...prev,
-                                            type: prev.type === type ? undefined : type
-                                        }));
-                                    }}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                        localFilters.type === type
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Category */}
-                    <div>
-                        <label className="block text-sm font-semibold text-secondary mb-3">
-                            Category
-                        </label>
-                        <div className="flex flex-wrap gap-3">
-                            {['Luxury', 'Affordable', 'Waterfront', 'Commercial'].map((category) => (
-                                <button
-                                    key={category}
-                                    onClick={() => {
-                                        setLocalFilters(prev => ({
-                                            ...prev,
-                                            category: prev.category === category ? undefined : category
-                                        }));
-                                    }}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                        localFilters.category === category
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Developer */}
                     <div>
                         <label className="block text-sm font-semibold text-secondary mb-3">
@@ -143,11 +90,57 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
                             ))}
                         </div>
                     </div>
+
+                    {/* Price Range */}
+                    <div>
+                        <label className="block text-sm font-semibold text-secondary mb-3">
+                            Price Range (AED)
+                        </label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs text-gray-600 mb-1">Min Price</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={localFilters.minPrice || ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setLocalFilters(prev => ({
+                                            ...prev,
+                                            minPrice: value && parseInt(value) > 0 ? parseInt(value) : undefined
+                                        }));
+                                    }}
+                                    placeholder="0"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-600 mb-1">Max Price</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={localFilters.maxPrice || ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setLocalFilters(prev => ({
+                                            ...prev,
+                                            maxPrice: value && parseInt(value) > 0 ? parseInt(value) : undefined
+                                        }));
+                                    }}
+                                    placeholder="No limit"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between p-6 border-t border-gray-200 gap-4">
                     <button
+                        type="button"
                         onClick={handleReset}
                         className="px-6 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
@@ -155,12 +148,14 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
                     </button>
                     <div className="flex gap-3">
                         <button
+                            type="button"
                             onClick={onClose}
                             className="px-6 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
+                            type="button"
                             onClick={handleApply}
                             className="px-6 py-3 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
                         >

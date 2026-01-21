@@ -11,10 +11,12 @@ import {
     MessageCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { fadeInUp, scrollReveal, staggerContainer, staggerItem } from '@/utils/animations';
 import Hotspots from '@/components/Hotspots';
 
 const Developers = () => {
+    const router = useRouter();
 
     // 1. Market Leaders Data
     const marketLeaders = [
@@ -65,7 +67,7 @@ const Developers = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/90 to-black/40" />
                 </div>
                 <div className="container mx-auto px-4 relative z-10 text-center pt-32">
-                    <motion.span 
+                    <motion.span
                         className="text-[#C5A365] text-xs font-bold uppercase tracking-[0.3em] mb-4 block"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -73,7 +75,7 @@ const Developers = () => {
                     >
                         Credence Real Estate Advisory
                     </motion.span>
-                    <motion.h1 
+                    <motion.h1
                         className="text-5xl md:text-7xl font-display text-white mb-6 leading-tight"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -81,7 +83,7 @@ const Developers = () => {
                     >
                         Top Real Estate<br /> <span className="text-[#C5A365]">Developers in Dubai</span>
                     </motion.h1>
-                    <motion.p 
+                    <motion.p
                         className="text-gray-200 text-lg max-w-2xl mx-auto mb-10"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -102,14 +104,14 @@ const Developers = () => {
             </section>
 
             {/* 2. Why Choose Section */}
-            <motion.section 
+            <motion.section
                 className="py-24 bg-white relative"
                 {...scrollReveal}
             >
                 <div className="container mx-auto px-4 max-w-7xl">
                     <div className="flex flex-col lg:flex-row gap-16">
                         {/* Left Text */}
-                        <motion.div 
+                        <motion.div
                             className="lg:w-1/3"
                             {...fadeInUp}
                         >
@@ -131,11 +133,11 @@ const Developers = () => {
                         </motion.div>
 
                         {/* Right Cards Grid */}
-                        <motion.div 
+                        <motion.div
                             className="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-6"
                             {...staggerContainer}
                         >
-                            <motion.div 
+                            <motion.div
                                 className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                 variants={staggerItem}
                             >
@@ -145,7 +147,7 @@ const Developers = () => {
                                 <h3 className="text-xl font-bold text-secondary mb-3">Quality Assurance</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">High construction standards and premium materials ensure lasting value.</p>
                             </motion.div>
-                            <motion.div 
+                            <motion.div
                                 className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                 variants={staggerItem}
                             >
@@ -155,7 +157,7 @@ const Developers = () => {
                                 <h3 className="text-xl font-bold text-secondary mb-3">Timely Delivery</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">Proven track record of completing projects on schedule.</p>
                             </motion.div>
-                            <motion.div 
+                            <motion.div
                                 className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                 variants={staggerItem}
                             >
@@ -165,7 +167,7 @@ const Developers = () => {
                                 <h3 className="text-xl font-bold text-secondary mb-3">Strong Returns</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">Better resale and rental value from reputed developers.</p>
                             </motion.div>
-                            <motion.div 
+                            <motion.div
                                 className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
                                 variants={staggerItem}
                             >
@@ -181,7 +183,7 @@ const Developers = () => {
             </motion.section>
 
             {/* 3. Developer Categories */}
-            <motion.section 
+            <motion.section
                 className="py-12 bg-[#FAFAFA]"
                 {...scrollReveal}
             >
@@ -191,32 +193,36 @@ const Developers = () => {
                         title="Market Leaders & Iconic Developers"
                         subtitle="These developers have played a defining role in transforming Dubai into a global real estate destination. Known for landmark projects and large-scale master developments."
                         data={marketLeaders}
+                        router={router}
                     />
 
                     <DeveloperSection
                         title="Premium & Established Developers"
                         subtitle="These developers are known for consistent quality, thoughtful planning, and strong buyer confidence. Their projects appeal to both end-users and long-term investors."
                         data={premiumDevelopers}
+                        router={router}
                     />
 
                     <DeveloperSection
                         title="Lifestyle & Community Developers"
                         subtitle="These developers specialize in integrated communities, accessibility, and lifestyle-centric living, making them attractive to families and first-time investors."
                         data={lifestyleDevelopers}
+                        router={router}
                     />
 
                     <DeveloperSection
                         title="Boutique, Sustainable & Emerging Developers"
                         subtitle="This category highlights niche developers focused on luxury, sustainability, design innovation, and community well-being."
                         data={boutiqueDevelopers}
+                        router={router}
                     />
 
                     {/* 5. Government Section */}
-                    <motion.div 
+                    <motion.div
                         className="mb-24"
                         {...scrollReveal}
                     >
-                        <motion.div 
+                        <motion.div
                             className="mb-10 pl-2"
                             {...fadeInUp}
                         >
@@ -226,7 +232,7 @@ const Developers = () => {
                                 Government-backed entities play a vital role in Dubai's long-term urban planning, infrastructure, and sustainable development.
                             </p>
                         </motion.div>
-                        <motion.div 
+                        <motion.div
                             className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl"
                             {...staggerContainer}
                         >
@@ -234,8 +240,8 @@ const Developers = () => {
                                 { name: "Dubai Municipality", image: "/assets/dubai muncipalty.png", desc: "Responsible for urban planning, regulations, infrastructure, and environmental sustainability across the emirate.", largeLogo: true },
                                 { name: "EXPO CITY DUBAI", image: "/assets/Expo city dubai.png", desc: "A future-ready smart city built on the legacy of Expo 2020, integrating innovation, sustainability, and modern urban living." }
                             ].map((dev, idx) => (
-                                <motion.div 
-                                    key={idx} 
+                                <motion.div
+                                    key={idx}
                                     className="bg-white p-8 rounded-2xl border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all group flex flex-col h-full w-full max-w-md"
                                     variants={staggerItem}
                                 >
@@ -245,7 +251,13 @@ const Developers = () => {
                                     <p className="text-gray-500 text-sm leading-relaxed mb-8 flex-grow">
                                         {dev.desc}
                                     </p>
-                                    <button className="flex items-center gap-2 text-[#C5A365] text-sm font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
+                                    <button 
+                                        onClick={() => {
+                                            router.push(`/properties?developer=${encodeURIComponent(dev.name)}`);
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                        className="flex items-center gap-2 text-[#C5A365] text-sm font-bold uppercase tracking-wider group-hover:gap-3 transition-all cursor-pointer"
+                                    >
                                         View Projects <ArrowRight size={16} />
                                     </button>
                                 </motion.div>
@@ -256,7 +268,7 @@ const Developers = () => {
             </motion.section>
 
             {/* 4. Explore Properties Map Section */}
-            <motion.section 
+            <motion.section
                 className="bg-white py-24 relative overflow-hidden"
                 {...scrollReveal}
             >
@@ -265,7 +277,7 @@ const Developers = () => {
                     <h2 className="text-4xl md:text-5xl font-display text-black mb-12">Explore Properties by Trusted Developers</h2>
 
                     <div className="max-w-6xl mx-auto bg-black rounded-3xl overflow-hidden relative p-8 md:p-12">
-                        <Hotspots 
+                        <Hotspots
                             title="Choose from Top Developers"
                             showTitle={true}
                             showFilters={false}
@@ -281,42 +293,58 @@ const Developers = () => {
     );
 };
 
-const DeveloperSection = ({ title, subtitle, data }) => (
-    <motion.div 
-        className="mb-24"
-        {...scrollReveal}
-    >
-        <motion.div 
-            className="mb-10 pl-2"
-            {...fadeInUp}
+const DeveloperSection = ({ title, subtitle, data, router }) => {
+    const handleViewProjects = (developerName) => {
+        if (router) {
+            router.push(`/properties?developer=${encodeURIComponent(developerName)}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    return (
+        <motion.div
+            className="mb-24"
+            {...scrollReveal}
         >
-            <span className="text-[#C5A365] text-xs font-bold uppercase tracking-widest mb-2 block">Featured</span>
-            <h2 className="text-3xl md:text-5xl font-display text-secondary mb-4">{title}</h2>
-            <p className="text-gray-500 max-w-3xl leading-relaxed">{subtitle}</p>
+            <motion.div
+                className="mb-10 pl-2"
+                {...fadeInUp}
+            >
+                <span className="text-[#C5A365] text-xs font-bold uppercase tracking-widest mb-2 block">Featured</span>
+                <h2 className="text-3xl md:text-5xl font-display text-secondary mb-4">{title}</h2>
+                <p className="text-gray-500 max-w-3xl leading-relaxed">{subtitle}</p>
+            </motion.div>
+            <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                {...staggerContainer}
+            >
+                {data.map((dev, idx) => (
+                    <motion.div
+                        key={idx}
+                        className="bg-white p-8 rounded-2xl border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all group flex flex-col h-full w-full max-w-md mx-auto cursor-pointer"
+                        variants={staggerItem}
+                        onClick={() => handleViewProjects(dev.name)}
+                    >
+                        <div className={`h-32 flex items-center justify-center mb-6 border-b border-gray-50 ${dev.largeLogo ? 'p-0.5' : 'p-3'}`}>
+                            <img src={dev.image} alt={dev.name} className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300" />
+                        </div>
+                        <p className="text-gray-500 text-sm leading-relaxed mb-8 flex-grow">
+                            {dev.desc}
+                        </p>
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewProjects(dev.name);
+                            }}
+                            className="flex items-center gap-2 text-[#C5A365] text-sm font-bold uppercase tracking-wider group-hover:gap-3 transition-all cursor-pointer"
+                        >
+                            View Projects <ArrowRight size={16} />
+                        </button>
+                    </motion.div>
+                ))}
+            </motion.div>
         </motion.div>
-        <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            {...staggerContainer}
-        >
-            {data.map((dev, idx) => (
-                <motion.div 
-                    key={idx} 
-                    className="bg-white p-8 rounded-2xl border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all group flex flex-col h-full w-full max-w-md mx-auto"
-                    variants={staggerItem}
-                >
-                    <div className={`h-32 flex items-center justify-center mb-6 border-b border-gray-50 ${dev.largeLogo ? 'p-0.5' : 'p-3'}`}>
-                        <img src={dev.image} alt={dev.name} className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300" />
-                    </div>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-8 flex-grow">
-                        {dev.desc}
-                    </p>
-                    <button className="flex items-center gap-2 text-[#C5A365] text-sm font-bold uppercase tracking-wider group-hover:gap-3 transition-all">
-                        View Projects <ArrowRight size={16} />
-                    </button>
-                </motion.div>
-            ))}
-        </motion.div>
-    </motion.div>
-);
+    );
+};
 
 export default Developers;

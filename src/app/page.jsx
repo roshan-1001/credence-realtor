@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { ArrowRight, MapPin, ChevronDown, ChevronUp, Star, Phone, MessageCircle, Percent, TrendingUp, Award, ShieldCheck, Users, Building2, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getPaginatedProperties, formatPrice } from '@/lib/properties';
@@ -13,6 +13,7 @@ import { openWhatsApp } from '@/utils/whatsappRedirect';
 const HomeContent = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [recentLaunches, setRecentLaunches] = useState([]);
     const [topPicks, setTopPicks] = useState([]);
     const [isLoadingProperties, setIsLoadingProperties] = useState(true);
@@ -454,7 +455,7 @@ const HomeContent = () => {
             </motion.section>
 
             {/* 4. Browse Properties (Collections) */}
-            <motion.section
+            {/* <motion.section
                 className="py-24 bg-white"
                 initial={scrollReveal.initial}
                 whileInView={scrollReveal.whileInView}
@@ -510,7 +511,7 @@ const HomeContent = () => {
                         })}
                     </motion.div>
                 </div>
-            </motion.section>
+            </motion.section> */}
 
             {/* 5. Explore by Developer */}
             <motion.section
@@ -533,7 +534,11 @@ const HomeContent = () => {
                             {developerLogos.map((dev, i) => (
                                 <div
                                     key={i}
-                                    className="w-48 h-20 border border-secondary/20 rounded-lg flex items-center justify-center p-4 hover:border-[#C5A365] transition-colors bg-white"
+                                    onClick={() => {
+                                        router.push(`/properties?developer=${encodeURIComponent(dev.name)}`);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="w-48 h-20 border border-secondary/20 rounded-lg flex items-center justify-center p-4 hover:border-[#C5A365] transition-colors bg-white cursor-pointer hover:shadow-md"
                                 >
                                     <img
                                         src={dev.img}
@@ -552,6 +557,9 @@ const HomeContent = () => {
                         <Hotspots
                             title="Choose from Top Developers"
                             showTitle={true}
+                            showFilters={false}
+                            showDeveloperFilters={true}
+                            developerFilters={["All", "EMAAR", "DAMAC", "SOBHA", "MERAAS", "AZIZI", "NAKHEEL"]}
                             filterOptions={["All", "Villa", "2 BHK", "3 BHK", "1 BHK"]}
                             className="px-0 py-0"
                         />

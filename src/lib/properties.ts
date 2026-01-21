@@ -1,4 +1,5 @@
 import { fetchProperties, fetchPropertyById as fetchPropertyByIdApi, ApiProperty, ApiFilterOptions } from './api';
+import { getDeveloperIdByName, fetchDevelopersMapping } from '@/utils/developerMapping';
 
 // Helper function to convert text numbers to integers
 function textToNumber(text: string): number | null {
@@ -518,10 +519,17 @@ function convertToApiFilters(filters: FilterOptions): ApiFilterOptions {
   // This causes 500 error: "Invalid value for argument `in`. Expected Category."
   // Workaround: Filter client-side instead of sending to backend
   
-  // Developer filter - backend might support developer_id or search
-  // For now, we'll filter client-side since backend structure is unclear
-  // Don't send developer filter to API - handle client-side instead
-  // This avoids potential Prisma enum issues similar to type filter
+  // Developer filter - use developer_id if available
+  // Try to convert developer name to developer_id for API filtering
+  if (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '') {
+    const developerId = getDeveloperIdByName(filters.developer.trim());
+    if (developerId) {
+      apiFilters.developer_id = developerId;
+    } else {
+      // Fallback to search if developer ID not found
+      apiFilters.search = filters.developer.trim();
+    }
+  }
   
   // City filter - only send if not empty
   if (filters.city && typeof filters.city === 'string' && filters.city.trim() !== '') {
@@ -551,12 +559,26 @@ function convertToApiFilters(filters: FilterOptions): ApiFilterOptions {
     apiFilters.max_sq_ft = filters.maxArea;
   }
   
-  // Bedrooms filter - DON'T SEND, causes 500 error
-  // Backend has Prisma enum bug that causes 500 errors
-  // Keeping this disabled until backend is fixed
-  // if (filters.bedrooms !== undefined && filters.bedrooms > 0) {
-  //   apiFilters.min_bedrooms = [filters.bedrooms.toString()];
-  // }
+  // Bedrooms filter - convert number to enum array
+  // API expects array of enum strings: ["One", "Two", "Three", etc.]
+  if (filters.bedrooms !== undefined && filters.bedrooms > 0) {
+    const bedroomEnumMap: { [key: number]: string } = {
+      1: "One",
+      2: "Two",
+      3: "Three",
+      4: "Four",
+      5: "Five",
+      6: "Six",
+      7: "Seven",
+    };
+    const enumValue = bedroomEnumMap[filters.bedrooms];
+    if (enumValue) {
+      apiFilters.min_bedrooms = [enumValue];
+      if (process.env.NODE_ENV === 'development') {
+        console.log('API filters: Using min_bedrooms', apiFilters.min_bedrooms);
+      }
+    }
+  }
   
   // Sort options - only send if defined
   if (filters.sortBy) {
@@ -749,15 +771,17 @@ export async function getPaginatedProperties(
   try {
     // Determine if we need client-side filtering
     // Backend has Prisma bugs with type, category, bedrooms filters
+    // Developer filtering can now be done server-side using developer_id
+    const apiFilters = convertToApiFilters(filters);
+    const hasDeveloperId = !!(apiFilters.developer_id);
+    
     const needsClientSideFiltering = !!(
       filters.type ||
       filters.category ||
       (filters.bedrooms !== undefined && filters.bedrooms > 0) ||
-      (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '')
+      // Only need client-side filtering for developer if developer_id is not available
+      (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '' && !hasDeveloperId)
     );
-    
-    // Convert FilterOptions to ApiFilterOptions
-    const apiFilters = convertToApiFilters(filters);
     
     // If we need client-side filtering, fetch ALL properties by paginating through API
     // Backend has a max limit of 100, so we need to fetch multiple pages
@@ -839,8 +863,8 @@ export async function getPaginatedProperties(
         }
       }
       
-      // Developer filter
-      if (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '') {
+      // Developer filter (only if developer_id was not available - fallback to client-side)
+      if (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '' && !hasDeveloperId) {
         const developerFilter = filters.developer.trim().toLowerCase();
         const beforeCount = properties.length;
         properties = properties.filter((p) => {
@@ -849,7 +873,7 @@ export async function getPaginatedProperties(
         });
         
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Developer filter (${developerFilter}): ${beforeCount} -> ${properties.length} properties`);
+          console.log(`Developer filter (client-side fallback, ${developerFilter}): ${beforeCount} -> ${properties.length} properties`);
         }
       }
       

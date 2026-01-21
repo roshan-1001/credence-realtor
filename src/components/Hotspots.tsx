@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { geocodeRegion } from "@/utils/geocodeRegion";
 import { formatPrice } from "@/utils/formatPrice";
+import { getDeveloperIdByName, fetchDevelopersMapping } from "@/utils/developerMapping";
 
 const MultiPropertyMap = dynamic(() => import("@/components/MultiPropertyMap"), {
   ssr: false,
@@ -61,7 +62,10 @@ interface HotspotSearchRequestBody {
   include_developer: boolean;
   type?: string;
   min_bedrooms?: string[];
-  search?: string; // For developer name search
+  min_price?: number;
+  max_price?: number;
+  developer_id?: string; // Use developer_id instead of search
+  search?: string; // For developer name search (fallback)
 }
 
 // Helper function to convert bedroom enum to number
@@ -118,6 +122,7 @@ export default function Hotspots({
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [developerMapping, setDeveloperMapping] = useState<Map<string, string>>(new Map());
   
   // Use external developer if provided, otherwise use internal state
   const selectedDeveloper = externalSelectedDeveloper !== undefined ? externalSelectedDeveloper : internalSelectedDeveloper;
@@ -129,6 +134,11 @@ export default function Hotspots({
       setInternalSelectedDeveloper(developer);
     }
   };
+
+  // Fetch developer mapping on mount
+  useEffect(() => {
+    fetchDevelopersMapping().then(setDeveloperMapping);
+  }, []);
 
   // Property type mapping
   const propertyTypeMap: { [key: string]: string | undefined } = {
@@ -160,13 +170,10 @@ export default function Hotspots({
           include_developer: true,
         };
 
-        // Add property type filter for non-BHK types
-        const mappedType = propertyTypeMap[propertyType];
-        if (mappedType) {
-          requestBody.type = mappedType;
-        }
+        // Note: Property type filter removed due to backend Prisma bug
+        // Property type filters are kept for UI but don't filter server-side
 
-        // Handle BHK types - filter by bedroom count
+        // Handle BHK types - filter by bedroom count using enum
         if (propertyType === "1 BHK") {
           requestBody.min_bedrooms = ["One"];
         } else if (propertyType === "2 BHK") {
@@ -175,9 +182,21 @@ export default function Hotspots({
           requestBody.min_bedrooms = ["Three"];
         }
 
-        // Note: We don't use search parameter for developer filtering
-        // Instead, we fetch all properties and filter client-side by developer name
-        // This is more reliable since search parameter searches across multiple fields
+        // Use developer_id for filtering if developer is selected
+        if (selectedDeveloper && selectedDeveloper !== "All") {
+          // Try to get developer ID from mapping
+          const developerId = developerMapping.get(selectedDeveloper.toUpperCase()) || 
+                             getDeveloperIdByName(selectedDeveloper);
+          
+          if (developerId) {
+            requestBody.developer_id = developerId;
+            console.log(`Using developer_id filter: ${developerId} for "${selectedDeveloper}"`);
+          } else {
+            // Fallback to search if ID not found
+            console.warn(`Developer ID not found for "${selectedDeveloper}", falling back to search`);
+            requestBody.search = selectedDeveloper;
+          }
+        }
 
         // Build query parameters for pagination
         const queryParams = new URLSearchParams();
@@ -313,61 +332,21 @@ export default function Hotspots({
           mappedProperties = mappedProperties.filter((p) => p.bedrooms === 3);
         }
 
-        // Filter by developer name if selected (client-side filtering for exact match)
-        if (selectedDeveloper && selectedDeveloper !== "All") {
+        // Note: Developer filtering is now done server-side using developer_id
+        // No need for client-side filtering when developer_id is used
+        // Only filter client-side if we had to fall back to search parameter
+        if (selectedDeveloper && selectedDeveloper !== "All" && !requestBody.developer_id) {
+          // Fallback: client-side filtering when developer_id is not available
           const beforeFilter = mappedProperties.length;
           const searchTerm = selectedDeveloper.toUpperCase().trim();
           
-          // Create a mapping of common developer name variations
-          const developerNameMap: { [key: string]: string[] } = {
-            "EMAAR": ["EMAAR", "EMAAR PROPERTIES", "EMAAR PROPERTIES PJSC", "EMAAR GROUP"],
-            "DAMAC": ["DAMAC", "DAMAC PROPERTIES", "DAMAC GROUP"],
-            "SOBHA": ["SOBHA", "SOBHA REALTY", "SOBHA REALTY GROUP"],
-            "MERAAS": ["MERAAS", "MERAAS PROPERTIES", "MERAAS HOLDINGS"],
-            "AZIZI": ["AZIZI", "AZIZI DEVELOPMENTS", "AZIZI PROPERTIES"],
-            "NAKHEEL": ["NAKHEEL", "NAKHEEL PROPERTIES", "NAKHEEL GROUP"]
-          };
-          
-          const searchVariations = developerNameMap[selectedDeveloper.toUpperCase()] || [searchTerm];
-          
           mappedProperties = mappedProperties.filter((p) => {
             const developerName = (p.developer || "").toUpperCase().trim();
-            
-            if (!developerName) {
-              return false;
-            }
-            
-            // Try matching against all variations
-            const matches = searchVariations.some(variation => {
-              const exactMatch = developerName === variation;
-              const containsMatch = developerName.includes(variation);
-              const startsWithMatch = developerName.startsWith(variation);
-              const endsWithMatch = developerName.endsWith(variation);
-              
-              return exactMatch || containsMatch || startsWithMatch || endsWithMatch;
-            });
-            
-            return matches;
+            if (!developerName) return false;
+            return developerName.includes(searchTerm) || developerName.startsWith(searchTerm);
           });
           
-          console.log(`Developer filter "${selectedDeveloper}": ${beforeFilter} -> ${mappedProperties.length} properties`);
-          
-          // Log all unique developer names for debugging if filter returns no results
-          if (mappedProperties.length === 0 && beforeFilter > 0) {
-            // Get developers from all properties before filtering
-            const allDevelopersBeforeFilter = [...new Set(
-              records
-                .map((r: APIProject) => {
-                  if (typeof r.developer === 'string') return r.developer;
-                  if (r.developer?.company?.name) return r.developer.company.name;
-                  if ((r.developer as any)?.name) return (r.developer as any).name;
-                  if ((r as any).developer_name) return (r as any).developer_name;
-                  return null;
-                })
-                .filter(Boolean)
-            )];
-            console.warn(`No properties found for "${selectedDeveloper}". Available developers (${allDevelopersBeforeFilter.length}):`, allDevelopersBeforeFilter.slice(0, 20));
-          }
+          console.log(`Developer filter (fallback) "${selectedDeveloper}": ${beforeFilter} -> ${mappedProperties.length} properties`);
         }
 
         console.log(`After filtering: ${mappedProperties.length} properties remain for ${propertyType}${selectedDeveloper && selectedDeveloper !== "All" ? ` and ${selectedDeveloper}` : ""}`);
@@ -389,7 +368,7 @@ export default function Hotspots({
     };
 
     fetchProperties();
-  }, [propertyType, selectedDeveloper]);
+  }, [propertyType, selectedDeveloper, developerMapping]);
 
   // Geocode properties to get coordinates
   useEffect(() => {
@@ -458,15 +437,18 @@ export default function Hotspots({
           {developerFilters.map((developer) => (
             <button
               key={developer}
-              onClick={() => handleDeveloperChange(developer)}
-              className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${
+              onClick={() => {
+                console.log(`Developer filter clicked: ${developer}`);
+                handleDeveloperChange(developer);
+              }}
+              className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 selectedDeveloper === developer
                   ? isDarkBackground
                     ? "bg-white text-black border border-white"
                     : "bg-[#C5A365] text-white shadow-md"
                   : isDarkBackground
-                  ? "bg-transparent text-gray-400 border border-white/20 hover:border-white hover:text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:border-[#C5A365] hover:text-[#C5A365]"
+                  ? "bg-transparent text-gray-400 border border-white/20 hover:border-white hover:text-white hover:bg-white/10"
+                  : "bg-white text-gray-700 border border-gray-300 hover:border-[#C5A365] hover:text-[#C5A365] hover:shadow-md"
               }`}
             >
               {developer}

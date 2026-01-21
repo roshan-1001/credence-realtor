@@ -142,13 +142,17 @@ function PropertiesContent() {
         fetchDevelopers();
     }, []);
 
-    // Read city or locality from URL params on mount
+    // Read all filter params from URL on mount
     useEffect(() => {
         const cityParam = searchParams.get('city');
         const localityParam = searchParams.get('locality');
-        const typeParam = searchParams.get('type');
-        const categoryParam = searchParams.get('category');
         const developerParam = searchParams.get('developer');
+        const minPriceParam = searchParams.get('minPrice');
+        const maxPriceParam = searchParams.get('maxPrice');
+        const minAreaParam = searchParams.get('minArea');
+        const maxAreaParam = searchParams.get('maxArea');
+        const sortByParam = searchParams.get('sortBy');
+        const sortOrderParam = searchParams.get('sortOrder');
         
         const urlFilters = {};
         if (localityParam) {
@@ -158,14 +162,38 @@ function PropertiesContent() {
             // Fallback to city filter
             urlFilters.city = cityParam;
         }
-        if (typeParam) {
-            urlFilters.type = typeParam;
-        }
-        if (categoryParam) {
-            urlFilters.category = categoryParam;
-        }
         if (developerParam) {
             urlFilters.developer = developerParam;
+        }
+        if (minPriceParam) {
+            const minPrice = parseInt(minPriceParam);
+            if (!isNaN(minPrice) && minPrice > 0) {
+                urlFilters.minPrice = minPrice;
+            }
+        }
+        if (maxPriceParam) {
+            const maxPrice = parseInt(maxPriceParam);
+            if (!isNaN(maxPrice) && maxPrice > 0) {
+                urlFilters.maxPrice = maxPrice;
+            }
+        }
+        if (minAreaParam) {
+            const minArea = parseInt(minAreaParam);
+            if (!isNaN(minArea) && minArea > 0) {
+                urlFilters.minArea = minArea;
+            }
+        }
+        if (maxAreaParam) {
+            const maxArea = parseInt(maxAreaParam);
+            if (!isNaN(maxArea) && maxArea > 0) {
+                urlFilters.maxArea = maxArea;
+            }
+        }
+        if (sortByParam) {
+            urlFilters.sortBy = sortByParam;
+        }
+        if (sortOrderParam) {
+            urlFilters.sortOrder = sortOrderParam;
         }
         
         if (Object.keys(urlFilters).length > 0) {
@@ -194,18 +222,9 @@ function PropertiesContent() {
                     apiFilters.search = debouncedSearchQuery.trim();
                 }
                 
-                // Add active filter
-                if (activeFilter !== 'All') {
-                    if (activeFilter === 'Off-Plan') {
-                        apiFilters.type = 'Off-Plan';
-                    } else if (activeFilter === 'Luxury Branded') {
-                        apiFilters.category = 'Luxury';
-                    } else if (activeFilter === 'Waterfront') {
-                        apiFilters.category = 'Waterfront';
-                    } else if (activeFilter === 'Affordable') {
-                        apiFilters.category = 'Affordable';
-                    }
-                }
+                // Note: Category and Type filters removed due to backend Prisma bugs
+                // Active filter buttons (Off-Plan, Luxury Branded, Waterfront, Affordable) 
+                // are kept for UI but don't filter properties
                 
                 // getPaginatedProperties now uses API-based filtering
                 const result = await getPaginatedProperties(apiFilters, currentPage, propertiesPerPage);
@@ -264,18 +283,32 @@ function PropertiesContent() {
 
     const handleApplyFilters = useCallback((newFilters) => {
         setFilters(newFilters);
-        // Update URL params
+        // Update URL params with all filter values without page reload
         const params = new URLSearchParams();
         if (newFilters.city) params.set('city', newFilters.city);
         if (newFilters.locality) params.set('locality', newFilters.locality);
-        if (newFilters.type) {
-            const typeValue = Array.isArray(newFilters.type) ? newFilters.type[0] : newFilters.type;
-            if (typeValue) params.set('type', typeValue);
-        }
-        if (newFilters.category) params.set('category', newFilters.category);
         if (newFilters.developer) params.set('developer', newFilters.developer);
+        if (newFilters.bedrooms !== undefined && newFilters.bedrooms > 0) {
+            params.set('bedrooms', newFilters.bedrooms.toString());
+        }
+        if (newFilters.minPrice !== undefined && newFilters.minPrice > 0) {
+            params.set('minPrice', newFilters.minPrice.toString());
+        }
+        if (newFilters.maxPrice !== undefined && newFilters.maxPrice > 0) {
+            params.set('maxPrice', newFilters.maxPrice.toString());
+        }
+        if (newFilters.minArea !== undefined && newFilters.minArea > 0) {
+            params.set('minArea', newFilters.minArea.toString());
+        }
+        if (newFilters.maxArea !== undefined && newFilters.maxArea > 0) {
+            params.set('maxArea', newFilters.maxArea.toString());
+        }
+        if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
+        if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
         const queryString = params.toString();
-        router.push(queryString ? `/properties?${queryString}` : '/properties');
+        // Use replace instead of push to avoid adding to history and prevent reload
+        // scroll: false prevents scrolling to top
+        router.replace(queryString ? `/properties?${queryString}` : '/properties', { scroll: false });
     }, [router]);
 
     return (
@@ -337,9 +370,9 @@ function PropertiesContent() {
                     </div>
 
                     {/* Top Controls - Responsive Update */}
-                    <div className="flex flex-col xl:flex-row justify-between items-center mb-8 gap-6">
+                    <div className="flex flex-col xl:flex-row justify-end items-center mb-8 gap-6">
                         {/* Main Type Toggle */}
-                        <div className="flex flex-wrap justify-center bg-white rounded-3xl p-1 border border-gray-100 shadow-sm w-full md:w-auto">
+                        {/* <div className="flex flex-wrap justify-center bg-white rounded-3xl p-1 border border-gray-100 shadow-sm w-full md:w-auto">
                             {filterCategories.map((filter) => (
                                 <button
                                     key={filter}
@@ -353,7 +386,7 @@ function PropertiesContent() {
                                     {filter === 'All' ? 'All Properties' : filter}
                                 </button>
                             ))}
-                        </div>
+                        </div> */}
 
                         {/* Secondary Filters */}
                         <div className="flex flex-wrap justify-center gap-3 w-full md:w-auto">
