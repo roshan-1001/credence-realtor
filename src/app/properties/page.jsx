@@ -11,6 +11,10 @@ import FilterModal from '@/components/FilterModal';
 import Hotspots from '@/components/Hotspots';
 import { getPaginatedProperties } from '@/lib/properties';
 import { allAreas } from './areaData';
+import { useScrollAnimations } from '@/utils/useScrollAnimation';
+import AnimatedSection from '@/components/AnimatedSection';
+import AnimatedContainer from '@/components/AnimatedContainer';
+import AnimatedItem from '@/components/AnimatedItem';
 
 function PropertiesContent() {
     const searchParams = useSearchParams();
@@ -33,6 +37,9 @@ function PropertiesContent() {
     const [visibleAreasCount, setVisibleAreasCount] = useState(6);
     const propertiesPerPage = 9;
     const debounceTimerRef = useRef(null);
+
+    // Initialize scroll animations
+    useScrollAnimations();
 
     // Filter categories
     const filterCategories = ['All', 'Off-Plan', 'Affordable', 'Luxury Branded', 'Waterfront'];
@@ -111,7 +118,7 @@ function PropertiesContent() {
                     throw new Error(`Failed to fetch developers: ${res.status}`);
                 }
                 const data = await res.json();
-                
+
                 if (data.success !== false && data.data) {
                     // Map API response to developer format
                     const developersList = data.data.map((dev) => ({
@@ -120,11 +127,11 @@ function PropertiesContent() {
                         projectCount: dev.project_count || 0,
                         developerId: dev.id,
                     })).filter((dev) => dev.name && dev.projectCount > 0)
-                      .sort((a, b) => b.projectCount - a.projectCount)
-                      .slice(0, 6); // Get top 6 developers
-                    
+                        .sort((a, b) => b.projectCount - a.projectCount)
+                        .slice(0, 6); // Get top 6 developers
+
                     setDevelopers(developersList);
-                    
+
                     // Calculate total projects
                     const total = developersList.reduce((sum, dev) => sum + dev.projectCount, 0);
                     setTotalProjects(total);
@@ -153,7 +160,7 @@ function PropertiesContent() {
         const maxAreaParam = searchParams.get('maxArea');
         const sortByParam = searchParams.get('sortBy');
         const sortOrderParam = searchParams.get('sortOrder');
-        
+
         const urlFilters = {};
         if (localityParam) {
             // Use locality filter if available (more specific)
@@ -195,7 +202,7 @@ function PropertiesContent() {
         if (sortOrderParam) {
             urlFilters.sortOrder = sortOrderParam;
         }
-        
+
         if (Object.keys(urlFilters).length > 0) {
             setFilters(urlFilters);
         }
@@ -206,33 +213,33 @@ function PropertiesContent() {
         const loadProperties = async () => {
             setIsLoading(true);
             setError(null);
-            
+
             // Minimum loading time to prevent flickering (300ms)
             const minLoadingTime = 300;
             const startTime = Date.now();
-            
+
             try {
                 // Combine search query with filters - all filtering is done by API
                 const apiFilters = {
                     ...filters,
                 };
-                
+
                 // Add debounced search to filters if provided
                 if (debouncedSearchQuery.trim()) {
                     apiFilters.search = debouncedSearchQuery.trim();
                 }
-                
+
                 // Note: Category and Type filters removed due to backend Prisma bugs
                 // Active filter buttons (Off-Plan, Luxury Branded, Waterfront, Affordable) 
                 // are kept for UI but don't filter properties
-                
+
                 // getPaginatedProperties now uses API-based filtering
                 const result = await getPaginatedProperties(apiFilters, currentPage, propertiesPerPage);
-                
+
                 setProperties(result.properties);
                 setTotalPages(result.pagination.totalPages);
                 setTotalProperties(result.pagination.total);
-                
+
                 if (process.env.NODE_ENV === 'development') {
                     console.log('Properties loaded:', {
                         count: result.properties.length,
@@ -241,7 +248,7 @@ function PropertiesContent() {
                         filters: apiFilters
                     });
                 }
-                
+
                 // Ensure minimum loading time
                 const elapsedTime = Date.now() - startTime;
                 if (elapsedTime < minLoadingTime) {
@@ -253,7 +260,7 @@ function PropertiesContent() {
                 setProperties([]);
                 setTotalPages(0);
                 setTotalProperties(0);
-                
+
                 // Ensure minimum loading time even on error
                 const elapsedTime = Date.now() - startTime;
                 if (elapsedTime < minLoadingTime) {
@@ -390,7 +397,7 @@ function PropertiesContent() {
 
                         {/* Secondary Filters */}
                         <div className="flex flex-wrap justify-center gap-3 w-full md:w-auto">
-                            <button 
+                            <button
                                 onClick={() => setIsFilterOpen(true)}
                                 className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-gray-100 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-200 transition-all whitespace-nowrap"
                             >
@@ -435,11 +442,11 @@ function PropertiesContent() {
                     )}
 
                     {!isLoading && !error && properties.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <AnimatedContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {properties.map(property => (
                                 <PropertyCard key={property.id} property={property} />
                             ))}
-                        </div>
+                        </AnimatedContainer>
                     )}
 
                     {/* Pagination */}
@@ -488,11 +495,10 @@ function PropertiesContent() {
                                     <button
                                         key={pageNum}
                                         onClick={() => handlePageChange(pageNum)}
-                                        className={`font-medium text-lg ${
-                                            currentPage === pageNum
-                                                ? 'bg-black text-white w-10 h-10 flex items-center justify-center rounded-full'
-                                                : 'text-gray-700 hover:text-black'
-                                        }`}
+                                        className={`font-medium text-lg ${currentPage === pageNum
+                                            ? 'bg-black text-white w-10 h-10 flex items-center justify-center rounded-full'
+                                            : 'text-gray-700 hover:text-black'
+                                            }`}
                                     >
                                         {pageNum}
                                     </button>
@@ -526,7 +532,7 @@ function PropertiesContent() {
             </section>
 
             {/* 3. Explore by Area Section */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <AnimatedSection className="py-24 bg-white relative overflow-hidden">
                 <div className="container mx-auto px-4 max-w-7xl relative z-10">
                     <div className="text-center mb-16">
                         <span className="bg-[#FFF9F0] text-[#C5A365] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-[#C5A365]/20">
@@ -542,7 +548,7 @@ function PropertiesContent() {
 
                     {/* Interactive Map Section */}
                     <div className="mb-16">
-                        <Hotspots 
+                        <Hotspots
                             title=""
                             showTitle={false}
                             showFilters={true}
@@ -552,9 +558,9 @@ function PropertiesContent() {
                     </div>
 
                     {/* Area Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <AnimatedContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {allAreas.slice(0, visibleAreasCount).map((area, i) => (
-                            <div key={i} className="group rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 bg-white">
+                            <AnimatedItem key={i} className="group rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 bg-white">
                                 <div className="h-64 relative overflow-hidden">
                                     <img src={area.img} alt={area.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-bold flex items-center gap-1 text-green-700">
@@ -578,22 +584,22 @@ function PropertiesContent() {
                                             <span className="text-gray-400 block mb-0.5">Starting from</span>
                                             <span className="font-bold text-secondary">{area.price}</span>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setSelectedArea(area);
                                                 setFilters({ locality: area.name });
                                                 router.push(`/properties?locality=${encodeURIComponent(area.name)}`);
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                                            }} 
+                                            }}
                                             className="text-[#C5A365] text-xs font-bold uppercase flex items-center gap-1 hover:gap-2 transition-all"
                                         >
                                             View Properties <ArrowRight size={12} />
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </AnimatedItem>
                         ))}
-                    </div>
+                    </AnimatedContainer>
 
                     {/* Load More Button */}
                     {visibleAreasCount < allAreas.length && (
@@ -612,10 +618,10 @@ function PropertiesContent() {
                     onClose={() => setSelectedArea(null)}
                     area={selectedArea}
                 />
-            </section>
+            </AnimatedSection>
 
             {/* 4. Explore by Developer */}
-            <section className="py-24 bg-[#FAFAFA]">
+            <AnimatedSection className="py-24 bg-[#FAFAFA]">
                 <div className="container mx-auto px-4 max-w-7xl text-center">
                     <span className="bg-white border border-gray-200 text-[#C5A365] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
                         Trusted Partners
@@ -637,8 +643,8 @@ function PropertiesContent() {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                        <div 
+                    <AnimatedContainer className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                        <AnimatedItem
                             onClick={() => {
                                 setFilters({});
                                 router.push('/properties');
@@ -648,22 +654,22 @@ function PropertiesContent() {
                         >
                             <span className="font-bold">All Developers</span>
                             <Check size={16} className="text-[#C5A365]" />
-                        </div>
+                        </AnimatedItem>
                         {isLoadingDevelopers ? (
                             // Loading skeleton
                             Array.from({ length: 6 }).map((_, i) => (
-                                <div 
+                                <AnimatedItem
                                     key={i}
                                     className="bg-white rounded-xl p-4 flex flex-col items-center justify-center border border-gray-100 h-24 animate-pulse"
                                 >
                                     <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
                                     <div className="h-3 w-16 bg-gray-200 rounded"></div>
-                                </div>
+                                </AnimatedItem>
                             ))
                         ) : developers.length > 0 ? (
                             developers.map((dev) => (
-                                <div 
-                                    key={dev.id || dev.name} 
+                                <AnimatedItem
+                                    key={dev.id || dev.name}
                                     onClick={() => {
                                         setFilters({ developer: dev.name });
                                         router.push(`/properties?developer=${encodeURIComponent(dev.name)}`);
@@ -677,13 +683,13 @@ function PropertiesContent() {
                                     <span className="text-[10px] text-gray-400">
                                         {dev.projectCount} {dev.projectCount === 1 ? 'project' : 'projects'}
                                     </span>
-                                </div>
+                                </AnimatedItem>
                             ))
                         ) : (
                             // Fallback to hardcoded developers if API fails
                             ['EMAAR', 'DAMAC', 'SOBHA', 'MERAAS', 'AZIZI', 'NAKHEEL'].map((dev, i) => (
-                                <div 
-                                    key={i} 
+                                <AnimatedItem
+                                    key={i}
                                     onClick={() => {
                                         setFilters({ developer: dev });
                                         router.push(`/properties?developer=${encodeURIComponent(dev)}`);
@@ -693,37 +699,37 @@ function PropertiesContent() {
                                 >
                                     <span className="font-bold text-gray-700 group-hover:text-secondary mb-1">{dev}</span>
                                     <span className="text-[10px] text-gray-400">Loading...</span>
-                                </div>
+                                </AnimatedItem>
                             ))
                         )}
-                    </div>
+                    </AnimatedContainer>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 max-w-5xl mx-auto">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm">
+                    <AnimatedContainer className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 max-w-5xl mx-auto">
+                        <AnimatedItem className="bg-white p-6 rounded-2xl shadow-sm">
                             <h4 className="text-3xl font-bold text-[#C5A365] mb-1">
                                 {isLoadingDevelopers ? '...' : totalProjects > 0 ? `${totalProjects}+` : '200+'}
                             </h4>
                             <p className="text-xs text-gray-400 uppercase tracking-wider">Total Projects</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm">
+                        </AnimatedItem>
+                        <AnimatedItem className="bg-white p-6 rounded-2xl shadow-sm">
                             <h4 className="text-3xl font-bold text-[#C5A365] mb-1">50K+</h4>
                             <p className="text-xs text-gray-400 uppercase tracking-wider">Units Delivered</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm">
+                        </AnimatedItem>
+                        <AnimatedItem className="bg-white p-6 rounded-2xl shadow-sm">
                             <h4 className="text-3xl font-bold text-[#C5A365] mb-1">15+</h4>
                             <p className="text-xs text-gray-400 uppercase tracking-wider">Years Experience</p>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm">
+                        </AnimatedItem>
+                        <AnimatedItem className="bg-white p-6 rounded-2xl shadow-sm">
                             <h4 className="text-3xl font-bold text-[#C5A365] mb-1">100%</h4>
                             <p className="text-xs text-gray-400 uppercase tracking-wider">Verified Developers</p>
-                        </div>
-                    </div>
+                        </AnimatedItem>
+                    </AnimatedContainer>
                 </div>
-            </section>
+            </AnimatedSection>
 
             {/* 5. Buyer's Guide Section */}
-            <section className="py-24 bg-white" id="buyers-guide">
+            <AnimatedSection className="py-24 bg-white" id="buyers-guide">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <div className="text-center mb-16">
                         <span className="bg-[#FFF9F0] text-[#C5A365] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-[#C5A365]/20">
@@ -1152,7 +1158,7 @@ function PropertiesContent() {
                         ))}
                     </div>
                 </div>
-            </section>
+            </AnimatedSection>
 
             {/* Filter Modal */}
             <FilterModal

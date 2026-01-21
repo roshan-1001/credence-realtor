@@ -64,7 +64,7 @@ html {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(40px);
   }
   to {
     opacity: 1;
@@ -168,7 +168,7 @@ section.animate-on-scroll:not(.is-visible) {
 }
 
 .animate-on-scroll.fade-in-up {
-  transform: translateY(20px);
+  transform: translateY(40px);
 }
 
 .animate-on-scroll.fade-in-down {
@@ -195,6 +195,7 @@ section.animate-on-scroll:not(.is-visible) {
 /* Stagger animation delays */
 .stagger-item {
   opacity: 0;
+  transform: translateY(30px);
   transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 

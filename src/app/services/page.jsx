@@ -13,7 +13,7 @@ const ServiceBlock = ({ iconLabel, label, title, titleHighlight, desc, primaryBt
     const [isOpen, setIsOpen] = React.useState(false);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-20 items-start py-20 lg:py-32 border-b border-gray-100 last:border-0 border-t">
+        <AnimatedSection className="flex flex-col lg:flex-row gap-8 lg:gap-20 items-start py-20 lg:py-32 border-b border-gray-100 last:border-0 border-t">
             {/* Left Content */}
             <div className="flex-1 flex flex-col sticky top-32">
                 <div className="flex items-center gap-2 mb-6">
@@ -93,13 +93,13 @@ const ServiceBlock = ({ iconLabel, label, title, titleHighlight, desc, primaryBt
                     </div>
                 </div>
             </div>
-        </div>
+        </AnimatedSection>
     );
 };
 
 const Services = () => {
     useScrollAnimations();
-    
+
     return (
         <div className="font-sans">
             {/* 1. Hero Section */}
@@ -119,7 +119,7 @@ const Services = () => {
                         <div className="h-[1px] w-8 bg-gray-400"></div>
                     </div>
 
-                    <h1 
+                    <h1
                         className="text-5xl md:text-7xl font-display text-white mb-6 leading-tight animate-fade-in-up"
                         style={{ animationDelay: '0.1s' }}
                     >
@@ -127,7 +127,7 @@ const Services = () => {
                         <span className="text-[#C5A365]">Support in Dubai</span>
                     </h1>
 
-                    <p 
+                    <p
                         className="text-gray-300 max-w-3xl mx-auto mb-10 text-lg leading-relaxed font-light animate-fade-in-up"
                         style={{ animationDelay: '0.2s' }}
                     >
@@ -180,8 +180,8 @@ const Services = () => {
                                         { icon: Scale, text: "Legal & ownership clarity" },
                                         { icon: Home, text: "Tailored property recommendations" }
                                     ].map((item, i) => (
-                                        <AnimatedItem 
-                                            key={i} 
+                                        <AnimatedItem
+                                            key={i}
                                             className="flex items-center gap-5"
                                         >
                                             <div className="w-10 h-10 bg-[#F9F7F2] flex items-center justify-center text-[#C5A365] rounded">

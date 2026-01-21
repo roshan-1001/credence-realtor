@@ -9,14 +9,11 @@ import { useScrollAnimation } from '@/utils/useScrollAnimation';
 
 const PropertyCard = ({ property, index = 0 }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const ref = useScrollAnimation({ animationType: 'fade-in', once: true });
 
     return (
         <>
             <div
-                ref={ref}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 hover-lift"
-                style={{ transitionDelay: `${index * 0.05}s` }}
+                className="stagger-item bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 hover-lift"
             >
                 {/* Image Container */}
                 <div className="relative h-64 overflow-hidden">
