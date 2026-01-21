@@ -78,11 +78,11 @@ const Footer = () => {
                     </div>
 
                     <a
-                        href="tel:+97145917373"
+                        href="tel:+971588919223"
                         className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors"
                     >
                         <Phone size={18} />
-                        <span>+971 4 591 7373</span>
+                        <span>+971 58 891 9223</span>
                     </a>
                 </div>
             </motion.section>
@@ -269,7 +269,7 @@ const Footer = () => {
                                 </li>
                                 <li className="flex items-center gap-3 text-xs text-gray-400 break-words">
                                     <Phone size={16} className="text-primary shrink-0" />
-                                    <span>+971 4 591 7373</span>
+                                    <span>+971 58 891 9223</span>
                                 </li>
                                 <li className="flex items-center gap-3 text-xs text-gray-400 break-words">
                                     <Mail size={16} className="text-primary shrink-0" />

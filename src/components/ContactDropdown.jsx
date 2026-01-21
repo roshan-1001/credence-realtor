@@ -44,7 +44,7 @@ const ContactDropdown = ({ label, className, icon: Icon = MessageCircle }) => {
                         Email Us
                     </a>
                     <a
-                        href="tel:+97145917373"
+                        href="tel:+971588919223"
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-md transition-colors text-gray-700 text-sm font-medium"
                     >
                         <div className="w-8 h-8 rounded-full bg-[#F9F7F2] flex items-center justify-center text-[#C5A365]">

@@ -60,7 +60,7 @@ const HomeContent = () => {
 
     const TIME_SLOTS = generateTimeSlots();
 
-    const WHATSAPP_NUMBER = '919403663624';
+    const WHATSAPP_NUMBER = '971588919223';
 
     useEffect(() => {
         const hash = window.location.hash || searchParams?.get('hash');

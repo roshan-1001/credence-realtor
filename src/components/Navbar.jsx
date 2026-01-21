@@ -56,7 +56,7 @@ const Navbar = () => {
                     <div className="hidden lg:flex items-center gap-6">
                         <div className="flex items-center text-white text-sm font-medium">
                             <Phone size={16} className="text-primary mr-2" />
-                            +971 4 591 7373
+                            +971 58 891 9223
                         </div>
                         <a
                             href="https://wa.me/971588919223"
@@ -126,7 +126,7 @@ const Navbar = () => {
                             <div className="pt-4 space-y-4">
                                 <div className="flex items-center text-white px-3 text-sm font-medium">
                                     <Phone size={16} className="text-primary mr-2" />
-                                    +971 4 591 7373
+                                    +971 58 891 9223
                                 </div>
                                 <a href="https://wa.me/971588919223" className="block w-full text-center bg-green-600 text-white font-bold py-3 px-6 rounded-full">
                                     WhatsApp Now

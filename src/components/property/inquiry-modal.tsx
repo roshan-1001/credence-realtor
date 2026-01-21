@@ -11,7 +11,7 @@ interface InquiryModalProps {
   propertyTitle: string
 }
 
-const WHATSAPP_NUMBER = '919403663624' // +919403663624
+const WHATSAPP_NUMBER = '971588919223' // +971588919223 
 
 const COUNTRY_CODES = [
   { code: '+971', country: 'UAE', flag: '🇦🇪' },
