@@ -118,8 +118,8 @@ const Footer = () => {
                                     { name: "Luxury Residences", path: "/properties" },
                                     { name: "Waterfront Properties", path: "/properties" },
                                     { name: "Featured Listings", path: "/properties" },
-                                    { name: "Why Buy in Dubai", path: "/guide" },
-                                    { name: "Property FAQs", path: "/properties" }
+                                    { name: "Why Buy in Dubai", path: "/blogs#market" },
+                                    { name: "Property FAQs", path: "/guide#faqs" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
@@ -135,13 +135,13 @@ const Footer = () => {
                             <h3 className="font-semibold text-white mb-6">Developers</h3>
                             <ul className="space-y-3">
                                 {[
-                                    { name: "Emaar Properties", path: "/properties" },
-                                    { name: "Damac Properties", path: "/properties" },
-                                    { name: "Nakheel", path: "/properties" },
-                                    { name: "Sobha Realty", path: "/properties" },
-                                    { name: "Meraas", path: "/properties" },
-                                    { name: "Dubai Properties", path: "/properties" },
-                                    { name: "Aldar", path: "/properties" }
+                                    { name: "Emaar Properties", path: "/properties?developer=EMAAR" },
+                                    { name: "Damac Properties", path: "/properties?developer=DAMAC" },
+                                    { name: "Nakheel", path: "/properties?developer=NAKHEEL" },
+                                    { name: "Sobha Realty", path: "/properties?developer=SOBHA REALTY" },
+                                    { name: "Meraas", path: "/properties?developer=MERAAS" },
+                                    { name: "Dubai Properties", path: "/properties?developer=DUBAI PROPERTIES" },
+                                    { name: "Aldar", path: "/properties?developer=ALDAR" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
@@ -159,11 +159,11 @@ const Footer = () => {
                                 {[
                                     { name: "Free Consultation", path: "/services" },
                                     { name: "Buy Property", path: "/services" },
-                                    { name: "Sell Property", path: "/services" },
-                                    { name: "Leasing Services", path: "/services" },
-                                    { name: "Mortgage Assistance", path: "/services" },
-                                    { name: "Golden Visa", path: "/services" },
-                                    { name: "Crypto Property", path: "/services" }
+                                    { name: "Sell Property", path: "/services#selling" },
+                                    { name: "Leasing Services", path: "/services#leasing" },
+                                    { name: "Mortgage Assistance", path: "/services#mortgage" },
+                                    { name: "Golden Visa", path: "/services#golden-visa" },
+                                    { name: "Crypto Property", path: "/services#crypto" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
@@ -179,14 +179,14 @@ const Footer = () => {
                             <h3 className="font-semibold text-white mb-6">Blogs</h3>
                             <ul className="space-y-3">
                                 {[
-                                    { name: "Why Invest in Dubai", path: "/blogs" },
-                                    { name: "Dubai Area Guide", path: "/blogs" },
-                                    { name: "Premium Locations", path: "/blogs" },
-                                    { name: "Waterfront Communities", path: "/blogs" },
-                                    { name: "Family-Friendly Areas", path: "/blogs" },
-                                    { name: "High-ROI Areas", path: "/blogs" },
-                                    { name: "Buyer's Guide", path: "/blogs" },
-                                    { name: "Dubai Property FAQs", path: "/blogs" }
+                                    { name: "Why Invest in Dubai", path: "/blogs#market" },
+                                    { name: "Dubai Area Guide", path: "/blogs#areas" },
+                                    { name: "Premium Locations", path: "/blogs#areas" },
+                                    { name: "Waterfront Communities", path: "/blogs#areas" },
+                                    { name: "Family-Friendly Areas", path: "/blogs#areas" },
+                                    { name: "High-ROI Areas", path: "/blogs#areas" },
+                                    { name: "Buyer's Guide", path: "/guide" },
+                                    { name: "Dubai Property FAQs", path: "/guide#faqs" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
@@ -202,10 +202,10 @@ const Footer = () => {
                             <h3 className="font-semibold text-white mb-6">Guide</h3>
                             <ul className="space-y-3">
                                 {[
-                                    { name: "Step-by-Step Guide", path: "/guide" },
-                                    { name: "Before buying", path: "/guide" },
-                                    { name: "Finding Your Fit", path: "/guide" },
-                                    { name: "FAQs", path: "/guide" }
+                                    { name: "Step-by-Step Guide", path: "/guide#steps" },
+                                    { name: "Before buying", path: "/guide#preparation" },
+                                    { name: "Finding Your Fit", path: "/guide#types" },
+                                    { name: "FAQs", path: "/guide#faqs" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
@@ -221,13 +221,13 @@ const Footer = () => {
                             <h3 className="font-semibold text-white mb-6">About us</h3>
                             <ul className="space-y-3">
                                 {[
-                                    { name: "Who We Are", path: "/about" },
-                                    { name: "Our Mission & Vision", path: "/about" },
-                                    { name: "Why Choose Credence", path: "/about" },
-                                    { name: "Our Team", path: "/about" },
-                                    { name: "Achievements", path: "/about" },
-                                    { name: "FAQs", path: "/about" },
-                                    { name: "Client Testimonials", path: "/about" }
+                                    { name: "Who We Are", path: "/about#who-we-are" },
+                                    { name: "Our Mission & Vision", path: "/about#mission" },
+                                    { name: "Why Choose Credence", path: "/about#choose-us" },
+                                    { name: "Our Team", path: "/about#team" },
+                                    { name: "Achievements", path: "/about#achievements" },
+                                    { name: "FAQs", path: "/about#faqs" },
+                                    { name: "Client Testimonials", path: "/about#testimonials" }
                                 ].map((item, i) => (
                                     <li key={i}>
                                         <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
