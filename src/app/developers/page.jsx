@@ -16,45 +16,66 @@ import AnimatedContainer from '@/components/AnimatedContainer';
 import AnimatedItem from '@/components/AnimatedItem';
 import { useScrollAnimations } from '@/utils/useScrollAnimation';
 import Hotspots from '@/components/Hotspots';
+import { DEVELOPERS } from '@/utils/developerMapping';
 
 const Developers = () => {
     const router = useRouter();
     useScrollAnimations();
 
+    // Helper function to create developer object with description
+    const createDeveloper = (name, logo, desc, largeLogo) => ({
+        name: name.toUpperCase(),
+        image: logo,
+        desc,
+        largeLogo
+    });
+
     // 1. Market Leaders Data
     const marketLeaders = [
-        { name: "EMAAR", image: "/assets/Emaar.png", desc: "A globally recognized developer behind some of Dubai's most iconic landmarks, master communities, retail destinations, and hospitality projects." },
-        { name: "NAKHEEL", image: "/assets/Nakheel.png", desc: "A visionary developer known for world-famous waterfront and lifestyle destinations supporting residential, commercial, and tourism growth." },
-        { name: "DAMAC", image: "/assets/DAMAC.png", desc: "A luxury-focused developer delivering high-end residential, branded, and lifestyle developments across prime locations." },
-        { name: "DUBAI PROPERTIES", image: "/assets/Dubai Properties.png", desc: "A master developer responsible for some of Dubai's most established mixed-use and residential destinations." },
-        { name: "MERAAS", image: "/assets/MERAAS.png", desc: "A lifestyle-driven developer creating vibrant urban destinations that blend leisure, culture, and modern living.", largeLogo: true }
+        createDeveloper('Emaar Properties', DEVELOPERS.find(d => d.id === 6)?.logo || '', "A globally recognized developer behind some of Dubai's most iconic landmarks, master communities, retail destinations, and hospitality projects."),
+        createDeveloper('Nakheel', DEVELOPERS.find(d => d.id === 442)?.logo || '', "A visionary developer known for world-famous waterfront and lifestyle destinations supporting residential, commercial, and tourism growth."),
+        createDeveloper('Damac', DEVELOPERS.find(d => d.id === 64)?.logo || '', "A luxury-focused developer delivering high-end residential, branded, and lifestyle developments across prime locations."),
+        createDeveloper('Dubai Properties', DEVELOPERS.find(d => d.id === 988)?.logo || '', "A master developer responsible for some of Dubai's most established mixed-use and residential destinations."),
+        createDeveloper('Meraas', DEVELOPERS.find(d => d.id === 89)?.logo || '', "A lifestyle-driven developer creating vibrant urban destinations that blend leisure, culture, and modern living.", true)
     ];
 
     // 2. Premium & Established Data
     const premiumDevelopers = [
-        { name: "SOBHA REALTY", image: "/assets/Sobha Realty.png", desc: "Renowned for superior construction quality, in-house engineering, and attention to detail." },
-        { name: "ALDAR", image: "/assets/Aldaar real estate.png", desc: "A leading UAE developer delivering sustainable, community-centric residential and commercial developments." },
-        { name: "AZIZI", image: "/assets/Azizi.png", desc: "A value-driven developer recognized for timely delivery and strategically located residential projects." },
-        { name: "ELLINGTON", image: "/assets/Ellington.png", desc: "A design-led developer focused on refined aesthetics, premium finishes, and lifestyle-driven homes." },
-        { name: "DEYAAR", image: "/assets/Deyaar.png", desc: "A prominent developer with a strong presence in Business Bay and key mixed-use developments." }
+        createDeveloper('Sobha', DEVELOPERS.find(d => d.id === 335)?.logo || '', "Renowned for superior construction quality, in-house engineering, and attention to detail."),
+        createDeveloper('Aldar', DEVELOPERS.find(d => d.id === 510)?.logo || '', "A leading UAE developer delivering sustainable, community-centric residential and commercial developments."),
+        createDeveloper('Azizi', DEVELOPERS.find(d => d.id === 55)?.logo || '', "A value-driven developer recognized for timely delivery and strategically located residential projects."),
+        createDeveloper('Ellington', DEVELOPERS.find(d => d.id === 69)?.logo || '', "A design-led developer focused on refined aesthetics, premium finishes, and lifestyle-driven homes."),
+        createDeveloper('Omniyat', DEVELOPERS.find(d => d.id === 67)?.logo || '', "A luxury developer known for ultra-premium residential and hospitality projects with exceptional design and craftsmanship.")
     ];
 
     // 3. Lifestyle & Community Data
     const lifestyleDevelopers = [
-        { name: "MAJID AL FUTTAIM", image: "/assets/Majjid al futtaim.png", desc: "A regional leader in integrated communities, retail, leisure, and lifestyle destinations.", largeLogo: true },
-        { name: "DANUBE PROPERTIES", image: "/assets/Danube.png", desc: "Known for affordable luxury developments supported by flexible and investor-friendly payment plans.", largeLogo: true },
-        { name: "SAMANA", image: "/assets/Samana.png", desc: "Contemporary developments offering modern design, strong amenities, and investor appeal.", largeLogo: true },
-        { name: "SELECT GROUP", image: "/assets/Select group.png", desc: "An international developer delivering premium residential, hospitality, and mixed-use projects.", largeLogo: true },
-        { name: "DUBAI HOLDING", image: "/assets/Dubai Holding.png", desc: "A global investment group with diversified interests across real estate, hospitality, and business districts." }
+        createDeveloper('Majid Al Futtaim', DEVELOPERS.find(d => d.id === 536)?.logo || '', "A regional leader in integrated communities, retail, leisure, and lifestyle destinations.", true),
+        createDeveloper('Danube', DEVELOPERS.find(d => d.id === 68)?.logo || '', "Known for affordable luxury developments supported by flexible and investor-friendly payment plans.", true),
+        createDeveloper('Select Group', DEVELOPERS.find(d => d.id === 441)?.logo || '', "An international developer delivering premium residential, hospitality, and mixed-use projects.", true),
+        createDeveloper('Dubai South', DEVELOPERS.find(d => d.id === 380)?.logo || '', "A master-planned city development focused on logistics, aviation, and sustainable urban living."),
+        createDeveloper('Expo City', DEVELOPERS.find(d => d.id === 473)?.logo || '', "A future-ready smart city built on the legacy of Expo 2020, integrating innovation, sustainability, and modern urban living.")
     ];
 
     // 4. Boutique & Sustainable Data
     const boutiqueDevelopers = [
-        { name: "AL BARARI", image: "/assets/al barari.png", desc: "A luxury eco-focused community emphasizing greenery, wellness, and low-density living.", largeLogo: true },
-        { name: "IMTIAZ", image: "/assets/imtiaz.png", desc: "Focused on high-quality, design-forward residential and mixed-use projects." },
-        { name: "JUMEIRAH GOLF ESTATES", image: "/assets/Jumeria.png", desc: "Exclusive golf-centered communities offering premium living surrounded by nature." },
-        { name: "ARADA", image: "/assets/Arada.png", desc: "Community-driven developments centered on livability, quality, and contemporary design." },
-        { name: "DIAMOND DEVELOPERS", image: "/assets/Daimond.png", desc: "A leader in sustainable urban developments and environmentally responsible communities.", largeLogo: true }
+        createDeveloper('ARADA', DEVELOPERS.find(d => d.id === 490)?.logo || '', "Community-driven developments centered on livability, quality, and contemporary design."),
+        createDeveloper('Imtiaz', DEVELOPERS.find(d => d.id === 424)?.logo || '', "Focused on high-quality, design-forward residential and mixed-use projects."),
+        createDeveloper('Beyond', DEVELOPERS.find(d => d.id === 1035)?.logo || '', "Innovative developments offering modern design, strong amenities, and investor appeal."),
+        createDeveloper('Binghatti', DEVELOPERS.find(d => d.id === 75)?.logo || '', "A boutique developer known for architectural excellence and premium residential projects."),
+        createDeveloper('The Heart of Europe', DEVELOPERS.find(d => d.id === 479)?.logo || '', "A unique island destination offering European-inspired luxury living in Dubai.", true),
+        createDeveloper('H&H Development', DEVELOPERS.find(d => d.id === 520)?.logo || '', "A developer focused on creating exceptional residential and commercial projects."),
+        createDeveloper('SRG', DEVELOPERS.find(d => d.id === 266)?.logo || '', "A developer known for quality construction and strategic project locations."),
+        createDeveloper('Reportage', DEVELOPERS.find(d => d.id === 542)?.logo || '', "Contemporary developments offering modern design, strong amenities, and investor appeal."),
+        createDeveloper('Object One', DEVELOPERS.find(d => d.id === 439)?.logo || '', "A developer focused on innovative design and quality residential projects."),
+        createDeveloper('Dugasta Properties Development', DEVELOPERS.find(d => d.id === 961)?.logo || '', "A developer committed to delivering quality residential and commercial projects."),
+        createDeveloper('Leos Development', DEVELOPERS.find(d => d.id === 474)?.logo || '', "A developer known for innovative residential projects and quality construction."),
+        createDeveloper('BnW Developments', DEVELOPERS.find(d => d.id === 823)?.logo || '', "A developer focused on creating exceptional residential developments."),
+        createDeveloper('Anax Developments', DEVELOPERS.find(d => d.id === 1030)?.logo || '', "A developer known for quality construction and strategic project locations."),
+        createDeveloper('AYS Property Development', DEVELOPERS.find(d => d.id === 508)?.logo || '', "A developer committed to delivering quality residential projects."),
+        createDeveloper('Nabni', DEVELOPERS.find(d => d.id === 524)?.logo || '', "A developer focused on innovative design and quality residential projects."),
+        createDeveloper('Union Properties', DEVELOPERS.find(d => d.id === 256)?.logo || '', "A developer known for quality construction and strategic project locations."),
+        createDeveloper('HRE Development', DEVELOPERS.find(d => d.id === 1034)?.logo || '', "A developer committed to delivering quality residential and commercial projects.")
     ];
 
     return (
@@ -201,8 +222,7 @@ const Developers = () => {
                         </div>
                         <AnimatedContainer className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
                             {[
-                                { name: "Dubai Municipality", image: "/assets/dubai muncipalty.png", desc: "Responsible for urban planning, regulations, infrastructure, and environmental sustainability across the emirate.", largeLogo: true },
-                                { name: "EXPO CITY DUBAI", image: "/assets/Expo city dubai.png", desc: "A future-ready smart city built on the legacy of Expo 2020, integrating innovation, sustainability, and modern urban living." }
+                                createDeveloper('Expo City', DEVELOPERS.find(d => d.id === 473)?.logo || '', "A future-ready smart city built on the legacy of Expo 2020, integrating innovation, sustainability, and modern urban living.")
                             ].map((dev, idx) => (
                                 <AnimatedItem
                                     key={idx}
@@ -242,7 +262,13 @@ const Developers = () => {
                             showTitle={true}
                             showFilters={false}
                             showDeveloperFilters={true}
-                            developerFilters={["All", "EMAAR", "DAMAC", "SOBHA", "MERAAS", "AZIZI", "NAKHEEL"]}
+                            developerFilters={["All", ...(() => {
+                                const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+                                const top10Developers = top10DeveloperIds
+                                    .map(id => DEVELOPERS.find(d => d.id === id))
+                                    .filter(Boolean);
+                                return top10Developers.map(d => d.name.toUpperCase());
+                            })()]}
                             filterOptions={["All", "Villa", "2 BHK", "3 BHK", "1 BHK"]}
                             className="px-0 py-0 bg-transparent"
                         />

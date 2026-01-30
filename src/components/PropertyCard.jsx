@@ -70,14 +70,18 @@ const PropertyCard = ({ property, index = 0 }) => {
                         {property.area !== undefined && property.area > 0 && (
                             <div className="flex items-center">
                                 <Square size={16} className="mr-1.5 text-gray-400" />
-                                <span className="font-medium text-secondary mr-1">{property.area.toLocaleString('en-US')}</span> sqft
+                                <span className="font-medium text-secondary mr-1">
+                                    {property.areaMax && property.areaMax > property.area 
+                                        ? `${property.area.toLocaleString('en-US')} - ${property.areaMax.toLocaleString('en-US')}`
+                                        : property.area.toLocaleString('en-US')}
+                                </span> sqft
                             </div>
                         )}
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-3 mt-6">
-                        <Link href={`/properties/${property.id}`} className="flex-1 border border-gray-200 text-secondary py-3 rounded-full hover:bg-black hover:text-white hover:border-black transition-all text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center">
+                        <Link href={`/properties/${property.slug || property.id}`} className="flex-1 border border-gray-200 text-secondary py-3 rounded-full hover:bg-black hover:text-white hover:border-black transition-all text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center">
                             View Details
                         </Link>
                         <button

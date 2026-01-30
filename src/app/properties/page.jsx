@@ -10,6 +10,7 @@ import AreaDetailsModal from '@/components/AreaDetailsModal';
 import FilterModal from '@/components/FilterModal';
 import Hotspots from '@/components/Hotspots';
 import { getPaginatedProperties } from '@/lib/properties';
+import { getAllDevelopers, DEVELOPERS } from '@/utils/developerMapping';
 import { allAreas } from './areaData';
 import { useScrollAnimations } from '@/utils/useScrollAnimation';
 import AnimatedSection from '@/components/AnimatedSection';
@@ -40,6 +41,72 @@ function PropertiesContent() {
 
     // Initialize scroll animations
     useScrollAnimations();
+
+    // Callbacks defined early to avoid initialization issues
+    const handleApplyFilters = useCallback((newFilters) => {
+        setFilters(newFilters);
+        setCurrentPage(1); // Reset to first page when filters change
+        // Update URL params with all filter values without page reload
+        const params = new URLSearchParams();
+        if (newFilters.city) params.set('city', newFilters.city);
+        if (newFilters.locality) params.set('locality', newFilters.locality);
+        if (newFilters.developer) params.set('developer', newFilters.developer);
+        if (newFilters.bedrooms !== undefined && newFilters.bedrooms > 0) {
+            params.set('bedrooms', newFilters.bedrooms.toString());
+        }
+        if (newFilters.minPrice !== undefined && newFilters.minPrice > 0) {
+            params.set('minPrice', newFilters.minPrice.toString());
+        }
+        if (newFilters.maxPrice !== undefined && newFilters.maxPrice > 0) {
+            params.set('maxPrice', newFilters.maxPrice.toString());
+        }
+        if (newFilters.minArea !== undefined && newFilters.minArea > 0) {
+            params.set('minArea', newFilters.minArea.toString());
+        }
+        if (newFilters.maxArea !== undefined && newFilters.maxArea > 0) {
+            params.set('maxArea', newFilters.maxArea.toString());
+        }
+        if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
+        if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
+        const queryString = params.toString();
+        // Use replace instead of push to avoid adding to history and prevent reload
+        // scroll: false prevents scrolling to top
+        router.replace(queryString ? `/properties?${queryString}` : '/properties', { scroll: false });
+        // Scroll to top of properties section after applying filters
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+    }, [router]);
+
+    // Listen for area filter events from modal
+    useEffect(() => {
+        const handleAreaFilter = (event) => {
+            const { locality } = event.detail;
+            if (locality) {
+                console.log('=== Area Filter Applied ===');
+                console.log('Locality:', locality);
+                console.log('Current filters before:', filters);
+                // Clear all other filters and only set locality to avoid conflicts
+                // This ensures we're only filtering by the selected area
+                handleApplyFilters({ locality });
+                setCurrentPage(1);
+                // Scroll to properties grid section after a short delay
+                setTimeout(() => {
+                    const propertiesSection = document.querySelector('.py-12.bg-gray-50\\/50');
+                    if (propertiesSection) {
+                        propertiesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        window.scrollTo({ top: 800, behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        };
+
+        window.addEventListener('applyAreaFilter', handleAreaFilter);
+        return () => {
+            window.removeEventListener('applyAreaFilter', handleAreaFilter);
+        };
+    }, [handleApplyFilters, filters]);
 
     // Filter categories
     const filterCategories = ['All', 'Off-Plan', 'Affordable', 'Luxury Branded', 'Waterfront'];
@@ -108,45 +175,29 @@ function PropertiesContent() {
         };
     }, [searchQuery]);
 
-    // Fetch developers from API
+    // Load developers from static list (no API needed)
     useEffect(() => {
-        const fetchDevelopers = async () => {
+        const loadDevelopers = () => {
             setIsLoadingDevelopers(true);
             try {
-                const res = await fetch('/api/developers?page=1&limit=20&min_projects=1');
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch developers: ${res.status}`);
-                }
-                const data = await res.json();
+                // Get all developers from static list
+                const allDevs = getAllDevelopers();
+                const developersList = allDevs.slice(0, 6).map((dev) => ({
+                    id: dev.id,
+                    name: dev.name,
+                    developerId: dev.id,
+                }));
 
-                if (data.success !== false && data.data) {
-                    // Map API response to developer format
-                    const developersList = data.data.map((dev) => ({
-                        id: dev.id,
-                        name: dev.company?.name || dev.name || '',
-                        projectCount: dev.project_count || 0,
-                        developerId: dev.id,
-                    })).filter((dev) => dev.name && dev.projectCount > 0)
-                        .sort((a, b) => b.projectCount - a.projectCount)
-                        .slice(0, 6); // Get top 6 developers
-
-                    setDevelopers(developersList);
-
-                    // Calculate total projects
-                    const total = developersList.reduce((sum, dev) => sum + dev.projectCount, 0);
-                    setTotalProjects(total);
-                } else {
-                    setDevelopers([]);
-                }
+                setDevelopers(developersList);
             } catch (err) {
-                console.error('Error fetching developers:', err);
+                console.error('Error loading developers:', err);
                 setDevelopers([]);
             } finally {
                 setIsLoadingDevelopers(false);
             }
         };
 
-        fetchDevelopers();
+        loadDevelopers();
     }, []);
 
     // Read all filter params from URL on mount
@@ -154,6 +205,7 @@ function PropertiesContent() {
         const cityParam = searchParams.get('city');
         const localityParam = searchParams.get('locality');
         const developerParam = searchParams.get('developer');
+        const bedroomsParam = searchParams.get('bedrooms');
         const minPriceParam = searchParams.get('minPrice');
         const maxPriceParam = searchParams.get('maxPrice');
         const minAreaParam = searchParams.get('minArea');
@@ -171,6 +223,12 @@ function PropertiesContent() {
         }
         if (developerParam) {
             urlFilters.developer = developerParam;
+        }
+        if (bedroomsParam) {
+            const bedrooms = parseInt(bedroomsParam);
+            if (!isNaN(bedrooms) && bedrooms > 0) {
+                urlFilters.bedrooms = bedrooms;
+            }
         }
         if (minPriceParam) {
             const minPrice = parseInt(minPriceParam);
@@ -287,36 +345,6 @@ function PropertiesContent() {
     const handleFilterChange = useCallback((filter) => {
         setActiveFilter(filter);
     }, []);
-
-    const handleApplyFilters = useCallback((newFilters) => {
-        setFilters(newFilters);
-        // Update URL params with all filter values without page reload
-        const params = new URLSearchParams();
-        if (newFilters.city) params.set('city', newFilters.city);
-        if (newFilters.locality) params.set('locality', newFilters.locality);
-        if (newFilters.developer) params.set('developer', newFilters.developer);
-        if (newFilters.bedrooms !== undefined && newFilters.bedrooms > 0) {
-            params.set('bedrooms', newFilters.bedrooms.toString());
-        }
-        if (newFilters.minPrice !== undefined && newFilters.minPrice > 0) {
-            params.set('minPrice', newFilters.minPrice.toString());
-        }
-        if (newFilters.maxPrice !== undefined && newFilters.maxPrice > 0) {
-            params.set('maxPrice', newFilters.maxPrice.toString());
-        }
-        if (newFilters.minArea !== undefined && newFilters.minArea > 0) {
-            params.set('minArea', newFilters.minArea.toString());
-        }
-        if (newFilters.maxArea !== undefined && newFilters.maxArea > 0) {
-            params.set('maxArea', newFilters.maxArea.toString());
-        }
-        if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
-        if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
-        const queryString = params.toString();
-        // Use replace instead of push to avoid adding to history and prevent reload
-        // scroll: false prevents scrolling to top
-        router.replace(queryString ? `/properties?${queryString}` : '/properties', { scroll: false });
-    }, [router]);
 
     return (
         <div className="font-sans">
@@ -442,7 +470,10 @@ function PropertiesContent() {
                     )}
 
                     {!isLoading && !error && properties.length > 0 && (
-                        <AnimatedContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <AnimatedContainer 
+                            key={`properties-${currentPage}-${Object.keys(filters).join('-')}`}
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                        >
                             {properties.map(property => (
                                 <PropertyCard key={property.id} property={property} />
                             ))}
@@ -558,7 +589,10 @@ function PropertiesContent() {
                     </div>
 
                     {/* Area Cards Grid */}
-                    <AnimatedContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <AnimatedContainer 
+                        key={`areas-${visibleAreasCount}`}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-8"
+                    >
                         {allAreas.slice(0, visibleAreasCount).map((area, i) => (
                             <AnimatedItem key={i} className="group rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 bg-white">
                                 <div className="h-64 relative overflow-hidden">
@@ -585,11 +619,9 @@ function PropertiesContent() {
                                             <span className="font-bold text-secondary">{area.price}</span>
                                         </div>
                                         <button
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                                e.preventDefault();
                                                 setSelectedArea(area);
-                                                setFilters({ locality: area.name });
-                                                router.push(`/properties?locality=${encodeURIComponent(area.name)}`);
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                             className="text-[#C5A365] text-xs font-bold uppercase flex items-center gap-1 hover:gap-2 transition-all"
                                         >
@@ -645,9 +677,11 @@ function PropertiesContent() {
 
                     <AnimatedContainer className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                         <AnimatedItem
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.preventDefault();
                                 setFilters({});
-                                router.push('/properties');
+                                setCurrentPage(1);
+                                window.history.pushState({}, '', '/properties');
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
                             className="bg-[#1A1A1A] text-white rounded-xl p-4 flex items-center justify-between col-span-2 md:col-span-2 lg:col-span-1 border border-transparent shadow-lg cursor-pointer hover:bg-gray-900 transition-colors"
@@ -670,9 +704,13 @@ function PropertiesContent() {
                             developers.map((dev) => (
                                 <AnimatedItem
                                     key={dev.id || dev.name}
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.preventDefault();
                                         setFilters({ developer: dev.name });
-                                        router.push(`/properties?developer=${encodeURIComponent(dev.name)}`);
+                                        setCurrentPage(1);
+                                        const params = new URLSearchParams();
+                                        params.set('developer', dev.name);
+                                        window.history.pushState({}, '', `/properties?${params.toString()}`);
                                         window.scrollTo({ top: 0, behavior: 'smooth' });
                                     }}
                                     className="bg-white rounded-xl p-4 flex flex-col items-center justify-center border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all cursor-pointer group h-24"
@@ -686,21 +724,31 @@ function PropertiesContent() {
                                 </AnimatedItem>
                             ))
                         ) : (
-                            // Fallback to hardcoded developers if API fails
-                            ['EMAAR', 'DAMAC', 'SOBHA', 'MERAAS', 'AZIZI', 'NAKHEEL'].map((dev, i) => (
-                                <AnimatedItem
-                                    key={i}
-                                    onClick={() => {
-                                        setFilters({ developer: dev });
-                                        router.push(`/properties?developer=${encodeURIComponent(dev)}`);
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    className="bg-white rounded-xl p-4 flex flex-col items-center justify-center border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all cursor-pointer group h-24"
-                                >
-                                    <span className="font-bold text-gray-700 group-hover:text-secondary mb-1">{dev}</span>
-                                    <span className="text-[10px] text-gray-400">Loading...</span>
-                                </AnimatedItem>
-                            ))
+                            // Fallback to top 10 developers if API fails
+                            (() => {
+                                const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+                                const top10Developers = top10DeveloperIds
+                                    .map(id => DEVELOPERS.find(d => d.id === id))
+                                    .filter(Boolean);
+                                return top10Developers.map((dev, i) => (
+                                    <AnimatedItem
+                                        key={i}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setFilters({ developer: dev.name.toUpperCase() });
+                                            setCurrentPage(1);
+                                            const params = new URLSearchParams();
+                                            params.set('developer', dev.name.toUpperCase());
+                                            window.history.pushState({}, '', `/properties?${params.toString()}`);
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                        className="bg-white rounded-xl p-4 flex flex-col items-center justify-center border border-gray-100 hover:border-[#C5A365] hover:shadow-lg transition-all cursor-pointer group h-24"
+                                    >
+                                        <span className="font-bold text-gray-700 group-hover:text-secondary mb-1">{dev.name.toUpperCase()}</span>
+                                        <span className="text-[10px] text-gray-400">Loading...</span>
+                                    </AnimatedItem>
+                                ));
+                            })()
                         )}
                     </AnimatedContainer>
 

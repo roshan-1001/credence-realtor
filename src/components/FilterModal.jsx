@@ -2,9 +2,17 @@
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { DEVELOPERS } from '@/utils/developerMapping';
 
 const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
     const [localFilters, setLocalFilters] = useState(filters || {});
+
+    // Sync localFilters when filters prop changes (e.g., when modal opens with new filters)
+    React.useEffect(() => {
+        if (isOpen) {
+            setLocalFilters(filters || {});
+        }
+    }, [filters, isOpen]);
 
     if (!isOpen) return null;
 
@@ -43,24 +51,33 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
                             Developer
                         </label>
                         <div className="flex flex-wrap gap-3">
-                            {['EMAAR', 'DAMAC', 'SOBHA', 'NAKHEEL', 'MERAAS', 'AZIZI'].map((developer) => (
-                                <button
-                                    key={developer}
-                                    onClick={() => {
-                                        setLocalFilters(prev => ({
-                                            ...prev,
-                                            developer: prev.developer === developer ? undefined : developer
-                                        }));
-                                    }}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                        localFilters.developer === developer
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {developer}
-                                </button>
-                            ))}
+                            {(() => {
+                                const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+                                const top10Developers = top10DeveloperIds
+                                    .map(id => DEVELOPERS.find(d => d.id === id))
+                                    .filter(Boolean);
+                                return top10Developers.map((dev) => {
+                                    const developerName = dev.name.toUpperCase();
+                                    return (
+                                        <button
+                                            key={dev.id}
+                                            onClick={() => {
+                                                setLocalFilters(prev => ({
+                                                    ...prev,
+                                                    developer: prev.developer === developerName ? undefined : developerName
+                                                }));
+                                            }}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                localFilters.developer === developerName
+                                                    ? 'bg-black text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {developerName}
+                                        </button>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
 
@@ -103,12 +120,12 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
                                     type="number"
                                     min="0"
                                     step="1000"
-                                    value={localFilters.minPrice || ''}
+                                    value={localFilters.minPrice !== undefined ? localFilters.minPrice : ''}
                                     onChange={(e) => {
                                         const value = e.target.value;
                                         setLocalFilters(prev => ({
                                             ...prev,
-                                            minPrice: value && parseInt(value) > 0 ? parseInt(value) : undefined
+                                            minPrice: value && !isNaN(parseInt(value)) && parseInt(value) > 0 ? parseInt(value) : undefined
                                         }));
                                     }}
                                     placeholder="0"
@@ -121,12 +138,12 @@ const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
                                     type="number"
                                     min="0"
                                     step="1000"
-                                    value={localFilters.maxPrice || ''}
+                                    value={localFilters.maxPrice !== undefined ? localFilters.maxPrice : ''}
                                     onChange={(e) => {
                                         const value = e.target.value;
                                         setLocalFilters(prev => ({
                                             ...prev,
-                                            maxPrice: value && parseInt(value) > 0 ? parseInt(value) : undefined
+                                            maxPrice: value && !isNaN(parseInt(value)) && parseInt(value) > 0 ? parseInt(value) : undefined
                                         }));
                                     }}
                                     placeholder="No limit"

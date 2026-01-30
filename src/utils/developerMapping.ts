@@ -1,114 +1,75 @@
-// Developer name to ID mapping based on API response
-// This maps common developer names to their UUIDs from the developers API
+// Developer name to ID mapping for Alnair API
+// Alnair uses numeric IDs for developers (e.g., builders[0]=55 for Emaar)
 
 export interface DeveloperInfo {
-  id: string;
+  id: number;
   name: string;
-  projectCount: number;
+  logo?: string;
 }
 
-// Developer name to ID mapping
-// Based on the developers API response structure
-export const DEVELOPER_NAME_TO_ID: { [key: string]: string } = {
-  // Emaar
-  "EMAAR": "92dde485-13ef-49f8-bb81-647df65a0635",
-  "EMAAR PROPERTIES": "92dde485-13ef-49f8-bb81-647df65a0635",
-  "EMAAR PROPERTIES (P.J.S.C)": "92dde485-13ef-49f8-bb81-647df65a0635",
-  "EMAAR GROUP": "92dde485-13ef-49f8-bb81-647df65a0635",
+// Static list of developers with their Alnair IDs and logos
+export const DEVELOPERS: DeveloperInfo[] = [
+  { id: 6, name: 'Emaar Properties', logo: 'https://files.alnair.ae/uploads/2023/3/59/74/5974dd50e1f85b5a56cdcef99f37eafe.png' },
+  { id: 442, name: 'Nakheel', logo: 'https://files.alnair.ae/uploads/2023/3/f5/40/f5409ee3abc4bcc64c98cfc1b932d3ec.png' },
+  { id: 89, name: 'Meraas', logo: 'https://files.alnair.ae/uploads/2023/5/49/1f/491ffef96076d62638f9e82b1e949f8e.png' },
+  { id: 988, name: 'Dubai Properties', logo: 'https://files.alnair.ae/uploads/2024/8/d6/c5/d6c501cf1655e7d80827b93b7b531c80.jpg' },
+  { id: 64, name: 'Damac', logo: 'https://files.alnair.ae/uploads/2023/2/87/11/8711de4977ea543b20637d56aae008a7.jpg' },
+  { id: 75, name: 'Binghatti', logo: 'https://files.alnair.ae/uploads/2023/2/b1/72/b172d12abf1764c980bb6d386799d771.jpg' },
+  { id: 55, name: 'Azizi', logo: 'https://files.alnair.ae/uploads/2023/2/61/96/61960833617390084dcf04c2b55fa878.jpg' },
+  { id: 490, name: 'ARADA', logo: 'https://files.alnair.ae/uploads/2025/10/cc/6e/cc6e912a3da38df2e6c746f38768153b.jpg' },
+  { id: 424, name: 'Imtiaz', logo: 'https://files.alnair.ae/uploads/2024/12/a3/07/a30749705ecf32ffdb546fe98a80faf3.png' },
+  { id: 1035, name: 'Beyond', logo: 'https://files.alnair.ae/uploads/2024/9/b0/b3/b0b3c46a78ca420114fed58d13d8217b.jpg' },
+  { id: 69, name: 'Ellington', logo: 'https://files.alnair.ae/uploads/2023/2/b4/14/b414f7493c40d8038fcc7faec37a6398.jpg' },
+  { id: 335, name: 'Sobha', logo: 'https://files.alnair.ae/uploads/2025/10/99/ad/99adee3628045b1b38e8144c607d84a4.png' },
+  { id: 510, name: 'Aldar', logo: 'https://files.alnair.ae/uploads/2023/6/38/fc/38fc0307791bfa0a62864637d5c10652.jpg' },
+  { id: 68, name: 'Danube', logo: 'https://files.alnair.ae/uploads/2023/3/ce/cf/cecfd137a1c39320cc6947dac2f6a78a.jpg' },
+  { id: 67, name: 'Omniyat', logo: 'https://files.alnair.ae/uploads/2023/3/e0/60/e060e6319b12c80ac776c94e4a108faf.jpg' },
+  { id: 380, name: 'Dubai South', logo: 'https://files.alnair.ae/uploads/2023/7/f7/a7/f7a7b92779698a1507a61749738f3327.png' },
+  { id: 473, name: 'Expo City', logo: 'https://files.alnair.ae/uploads/2023/4/df/69/df69de6ea48d4f5f1ec8ed07a87780cf.png' },
+  { id: 479, name: 'The Heart of Europe', logo: 'https://files.alnair.ae/uploads/2023/4/40/2c/402cf9d3c2bee9d131e47479ed967e80.png' },
+  { id: 520, name: 'H&H Development', logo: 'https://files.alnair.ae/uploads/2023/6/f3/db/f3dbff1b9db7d38e60531480827cefe8.jpg' },
+  { id: 266, name: 'SRG', logo: 'https://files.alnair.ae/uploads/2023/6/78/29/7829eb7a9ff88b3159eb3e9420b19d90.png' },
+  { id: 542, name: 'Reportage', logo: 'https://files.alnair.ae/uploads/2023/7/44/6d/446d60773aa54928d125e8efae91907a.jpg' },
+  { id: 441, name: 'Select Group', logo: 'https://files.alnair.ae/uploads/2023/3/2b/4c/2b4c5aa94d1ed171f17052565acc4d51.jpg' },
+  { id: 536, name: 'Majid Al Futtaim', logo: 'https://files.alnair.ae/uploads/2023/7/48/14/4814b4710991b787eb1134553e1571f6.jpg' },
+  { id: 439, name: 'Object One', logo: 'https://files.alnair.ae/uploads/2023/5/9d/d7/9dd70a933c457c0cfa7c646ec299f1c1.jpg' },
+  { id: 961, name: 'Dugasta Properties Development', logo: 'https://files.alnair.ae/uploads/2024/8/d8/3e/d83e2fade14a6be17b4787c3742d39a9.png' },
+  { id: 474, name: 'Leos Development', logo: 'https://files.alnair.ae/uploads/2025/4/56/58/5658ab7d3aea0e009ac7d3e765c2826f.png' },
+  { id: 823, name: 'BnW Developments', logo: 'https://files.alnair.ae/uploads/2024/6/89/ec/89ec0455df07d71774e54863246bef8d.jpg' },
+  { id: 1030, name: 'Anax Developments', logo: 'https://files.alnair.ae/uploads/2024/9/63/47/63478d408ed92a294011d32c0b841ef7.jpg' },
+  { id: 508, name: 'AYS Property Development', logo: 'https://files.alnair.ae/uploads/2025/11/70/cb/70cb384da09b037c184630c42d82b340.png' },
+  { id: 524, name: 'Nabni', logo: 'https://files.alnair.ae/uploads/user_logo/2024/10/d4/9b/d49becd1f1e29f5462be90165141cfc8.png' },
+  { id: 256, name: 'Union Properties', logo: 'https://files.alnair.ae/uploads/user_logo/2024/8/5f/15/5f15404a2d6556af825442f39faa2805.jpg' },
+  { id: 1034, name: 'HRE Development', logo: 'https://files.alnair.ae/uploads/user_logo/2025/2/7e/28/7e289756cd4dee4b371e21d1a086a661.png' },
+];
+
+// Developer name to ID mapping for quick lookup
+const DEVELOPER_NAME_TO_ID: Map<string, number> = new Map();
+
+// Initialize the mapping
+DEVELOPERS.forEach(dev => {
+  const normalizedName = dev.name.toUpperCase().trim();
+  DEVELOPER_NAME_TO_ID.set(normalizedName, dev.id);
   
-  // DAMAC
-  "DAMAC": "001aaabb-61ea-40bd-b393-f867df318071",
-  "DAMAC PROPERTIES": "001aaabb-61ea-40bd-b393-f867df318071",
-  "DAMAC PROPERTIES DUBAI CO P.S.C.": "001aaabb-61ea-40bd-b393-f867df318071",
-  "DAMAC GROUP": "001aaabb-61ea-40bd-b393-f867df318071",
-  
-  // Azizi
-  "AZIZI": "140b41c3-33b3-406b-bb60-20a66b16daa7",
-  "AZIZI DEVELOPMENTS": "140b41c3-33b3-406b-bb60-20a66b16daa7",
-  "AZIZI DEVELOPMENTS L.L.C": "140b41c3-33b3-406b-bb60-20a66b16daa7",
-  "AZIZI PROPERTIES": "140b41c3-33b3-406b-bb60-20a66b16daa7",
-  
-  // Tiger Properties
-  "TIGER PROPERTIES": "07a098a2-b96a-4184-a223-560445da95c2",
-  "TIGER": "07a098a2-b96a-4184-a223-560445da95c2",
-  
-  // Object One
-  "OBJECT ONE": "647fbca1-372f-42cc-80fa-7675314e2314",
-  "OBJECT ONE REAL ESTATE DEVELOPMENT L.L.C": "647fbca1-372f-42cc-80fa-7675314e2314",
-  
-  // A D E Properties
-  "A D E PROPERTIES": "58693d2a-b1da-499a-b625-0504c7840698",
-  "ADE PROPERTIES": "58693d2a-b1da-499a-b625-0504c7840698",
-  
-  // BNW Developments
-  "BNW DEVELOPMENTS": "79117414-0f38-4475-b208-9b7381707995",
-  "BNW": "79117414-0f38-4475-b208-9b7381707995",
-  
-  // A B A Real Estate Development
-  "A B A REAL ESTATE DEVELOPMENT": "d0f21db8-7f8c-4cc7-bc8b-4b5ec359f81b",
-  "ABA REAL ESTATE": "d0f21db8-7f8c-4cc7-bc8b-4b5ec359f81b",
-  
-  // A.C.Holdings
-  "A.C.HOLDINGS": "c1c9259d-0820-4ca9-a6f5-1d05e8bb3ec8",
-  "AC HOLDINGS": "c1c9259d-0820-4ca9-a6f5-1d05e8bb3ec8",
-  
-  // Leos Development
-  "LEOS DEVELOPMENT": "6a3ab632-04af-43b6-8347-d29a2ede114b",
-  "LEOS": "6a3ab632-04af-43b6-8347-d29a2ede114b",
-  
-  // Taraf Properties
-  "TARAF PROPERTIES": "7c3277b6-ff6a-44e1-ac31-11e1d5d48696",
-  "TARAF PROPERTIES DMCC": "7c3277b6-ff6a-44e1-ac31-11e1d5d48696",
-  
-  // 1b Tower Co.
-  "1B TOWER": "6f6f0c73-df4e-45b6-b1b3-bd6ef09f71cb",
-  "1B TOWER CO. L.L.C": "6f6f0c73-df4e-45b6-b1b3-bd6ef09f71cb",
-  
-  // Note: Additional developers from API response
-  // These will be dynamically loaded from the API, but we include common ones here
-  // The fetchDevelopersMapping function will merge API data with this static mapping
-  
-  // A H S Palm Development
-  "A H S PALM DEVELOPMENT": "4ca71fe0-bdf1-4c70-8741-014806bb561e",
-  "AHS PALM": "4ca71fe0-bdf1-4c70-8741-014806bb561e",
-  
-  // Aa Real Estate Development
-  "AA REAL ESTATE DEVELOPMENT": "81928a20-6acc-468a-abbc-8f997774a16b",
-  "AA REAL ESTATE": "81928a20-6acc-468a-abbc-8f997774a16b",
-  
-  // Ab Properties
-  "AB PROPERTIES": "b9117696-2da0-4088-b4ff-f63560123cd2",
-  "AB PROPERTIES LIMITED": "b9117696-2da0-4088-b4ff-f63560123cd2",
-  
-  // Das Real Estate
-  "DAS REAL ESTATE": "38fbf7df-0466-4f3d-8efd-f58c2759e768",
-  "DAS": "38fbf7df-0466-4f3d-8efd-f58c2759e768",
-  
-  // Ginco Properties
-  "GINCO PROPERTIES": "e8a56d20-1b1f-4a85-8098-b355f987b11c",
-  "GINCO": "e8a56d20-1b1f-4a85-8098-b355f987b11c",
-  
-  // Qube Development
-  "QUBE DEVELOPMENT": "ccdfb4f5-ec6b-4f46-b46e-a708386c84a7",
-  "QUBE": "ccdfb4f5-ec6b-4f46-b46e-a708386c84a7",
-  
-  // Vincitore Real Estate Development
-  "VINCITORE": "9e1c109d-0ae1-4682-bb0b-8870a77e9916",
-  "VINCITORE REAL ESTATE": "9e1c109d-0ae1-4682-bb0b-8870a77e9916",
-  
-  // Additional common developer name variations
-  "SOBHA": "8a69afa1-533a-4245-a126-efece8547d08", // Note: This ID may need to be updated from API
-  "SOBHA REALTY": "8a69afa1-533a-4245-a126-efece8547d08",
-  "SOBHA REALTY GROUP": "8a69afa1-533a-4245-a126-efece8547d08",
-  
-  "NAKHEEL": "5cca9f3e-4bc6-4545-88d0-6e575cd07e94", // Note: This ID may need to be updated from API
-  "NAKHEEL PROPERTIES": "5cca9f3e-4bc6-4545-88d0-6e575cd07e94",
-  "NAKHEEL GROUP": "5cca9f3e-4bc6-4545-88d0-6e575cd07e94",
-  
-  "MERAAS": "e5fce201-46b9-4066-9312-9d1a2d6b9592", // Note: This ID may need to be updated from API
-  "MERAAS PROPERTIES": "e5fce201-46b9-4066-9312-9d1a2d6b9592",
-  "MERAAS HOLDINGS": "e5fce201-46b9-4066-9312-9d1a2d6b9592",
-};
+  // Add variations without common suffixes
+  const suffixes = [' PROPERTIES', ' DEVELOPMENTS', ' DEVELOPMENT', ' REALTY', ' GROUP', ' DEVELOPERS', ' HOLDING', ' HOLDINGS', ' L.L.C', ' LLC'];
+  let simplifiedName = normalizedName;
+  suffixes.forEach(suffix => {
+    if (simplifiedName.endsWith(suffix)) {
+      simplifiedName = simplifiedName.replace(suffix, '').trim();
+      if (simplifiedName) {
+        DEVELOPER_NAME_TO_ID.set(simplifiedName, dev.id);
+      }
+    }
+  });
+});
+
+/**
+ * Get all developers (for display in UI)
+ */
+export function getAllDevelopers(): DeveloperInfo[] {
+  return [...DEVELOPERS].sort((a, b) => a.name.localeCompare(b.name));
+}
 
 /**
  * Get developer ID from developer name
@@ -121,14 +82,14 @@ export function getDeveloperIdByName(developerName: string): string | null {
   const normalizedName = developerName.toUpperCase().trim();
   
   // Direct lookup
-  if (DEVELOPER_NAME_TO_ID[normalizedName]) {
-    return DEVELOPER_NAME_TO_ID[normalizedName];
+  if (DEVELOPER_NAME_TO_ID.has(normalizedName)) {
+    return DEVELOPER_NAME_TO_ID.get(normalizedName)!.toString();
   }
   
-  // Try partial matching for common variations
-  for (const [key, value] of Object.entries(DEVELOPER_NAME_TO_ID)) {
+  // Try partial matching
+  for (const [key, value] of DEVELOPER_NAME_TO_ID.entries()) {
     if (normalizedName.includes(key) || key.includes(normalizedName)) {
-      return value;
+      return value.toString();
     }
   }
   
@@ -136,52 +97,26 @@ export function getDeveloperIdByName(developerName: string): string | null {
 }
 
 /**
- * Fetch all developers from API and create a dynamic mapping
- * This allows us to get the latest developer IDs from the API
+ * Get developer ID by name (async version for compatibility)
+ */
+export async function getDeveloperIdByNameAsync(developerName: string): Promise<string | null> {
+  return getDeveloperIdByName(developerName);
+}
+
+/**
+ * Get developer by ID
+ */
+export function getDeveloperById(id: number): DeveloperInfo | undefined {
+  return DEVELOPERS.find(dev => dev.id === id);
+}
+
+/**
+ * Fetch developers mapping (for compatibility - now returns static data)
  */
 export async function fetchDevelopersMapping(): Promise<Map<string, string>> {
-  try {
-    const response = await fetch('/api/developers?page=1&limit=100');
-    if (!response.ok) {
-      console.warn('Failed to fetch developers for mapping');
-      return new Map(Object.entries(DEVELOPER_NAME_TO_ID));
-    }
-    
-    const data = await response.json();
-    if (!data.success || !data.data) {
-      return new Map(Object.entries(DEVELOPER_NAME_TO_ID));
-    }
-    
-    const mapping = new Map<string, string>();
-    
-    // Add static mappings first
-    Object.entries(DEVELOPER_NAME_TO_ID).forEach(([name, id]) => {
-      mapping.set(name, id);
-    });
-    
-    // Add dynamic mappings from API
-    data.data.forEach((dev: any) => {
-      const companyName = dev.Company?.name || dev.name;
-      if (companyName && dev.id) {
-        const normalizedName = companyName.toUpperCase().trim();
-        mapping.set(normalizedName, dev.id);
-        
-        // Also add variations
-        if (normalizedName.includes('PROPERTIES')) {
-          mapping.set(normalizedName.replace(' PROPERTIES', ''), dev.id);
-        }
-        if (normalizedName.includes('DEVELOPMENTS')) {
-          mapping.set(normalizedName.replace(' DEVELOPMENTS', ''), dev.id);
-        }
-        if (normalizedName.includes('DEVELOPMENT')) {
-          mapping.set(normalizedName.replace(' DEVELOPMENT', ''), dev.id);
-        }
-      }
-    });
-    
-    return mapping;
-  } catch (error) {
-    console.error('Error fetching developers mapping:', error);
-    return new Map(Object.entries(DEVELOPER_NAME_TO_ID));
-  }
+  const mapping = new Map<string, string>();
+  DEVELOPER_NAME_TO_ID.forEach((id, name) => {
+    mapping.set(name, id.toString());
+  });
+  return mapping;
 }

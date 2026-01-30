@@ -4,13 +4,14 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { ArrowRight, MapPin, ChevronDown, ChevronUp, Star, Phone, MessageCircle, Percent, TrendingUp, Award, ShieldCheck, Users, Building2, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getPaginatedProperties, formatPrice } from '@/lib/properties';
+import { getPaginatedProperties, formatPrice, formatDate } from '@/lib/properties';
 import Hotspots from '@/components/Hotspots';
 import { openWhatsApp } from '@/utils/whatsappRedirect';
 import { useScrollAnimations } from '@/utils/useScrollAnimation';
 import AnimatedSection from '@/components/AnimatedSection';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import AnimatedItem from '@/components/AnimatedItem';
+import { DEVELOPERS } from '@/utils/developerMapping';
 
 const HomeContent = () => {
     const pathname = usePathname();
@@ -163,14 +164,17 @@ const HomeContent = () => {
         },
     ];
 
-    const developers = ["EMAAR", "DAMAC", "SOBHA", "MERAAS", "AZIZI", "NAKHEEL"];
-    const developerLogos = [
-        { name: "EMAAR", img: "/assets/Emaar.png" },
-        { name: "DAMAC", img: "/assets/DAMAC.png" },
-        { name: "SOBHA", img: "/assets/Sobha Realty.png" },
-        { name: "MERAAS", img: "/assets/MERAAS.png" },
-        { name: "AZIZI", img: "/assets/Azizi.png" }
-    ];
+    // Top 10 developers from mapping
+    const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+    const top10Developers = top10DeveloperIds
+        .map(id => DEVELOPERS.find(d => d.id === id))
+        .filter(Boolean);
+    
+    const developers = top10Developers.map(d => d.name.toUpperCase());
+    const developerLogos = top10Developers.map(d => ({
+        name: d.name.toUpperCase(),
+        img: d.logo || ''
+    }));
 
     const filterOptions = [
         { name: "All", color: "bg-gray-400" },
@@ -399,7 +403,7 @@ const HomeContent = () => {
                                             <div>
                                                 <p className="text-xs text-gray-400 uppercase">Delivery Date</p>
                                                 <p className="text-secondary font-semibold text-sm">
-                                                    {item.readyDate || 'TBA'}
+                                                    {formatDate(item.readyDate)}
                                                 </p>
                                             </div>
                                             <div className="text-right">
@@ -523,7 +527,7 @@ const HomeContent = () => {
                             showTitle={true}
                             showFilters={false}
                             showDeveloperFilters={true}
-                            developerFilters={["All", "EMAAR", "DAMAC", "SOBHA", "MERAAS", "AZIZI", "NAKHEEL"]}
+                            developerFilters={["All", ...top10Developers.map(d => d.name.toUpperCase())]}
                             filterOptions={["All", "Villa", "2 BHK", "3 BHK", "1 BHK"]}
                             className="px-0 py-0"
                         />
@@ -580,7 +584,7 @@ const HomeContent = () => {
                                             </div>
                                             <div>
                                                 <span className="block text-gray-500 text-xs">Handover</span>
-                                                {item.readyDate || 'TBA'}
+                                                {formatDate(item.readyDate)}
                                             </div>
                                         </div>
 

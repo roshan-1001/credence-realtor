@@ -1,5 +1,5 @@
 import { fetchProperties, fetchPropertyById as fetchPropertyByIdApi, ApiProperty, ApiFilterOptions } from './api';
-import { getDeveloperIdByName, fetchDevelopersMapping } from '@/utils/developerMapping';
+import { getDeveloperIdByName, getDeveloperIdByNameAsync, fetchDevelopersMapping } from '@/utils/developerMapping';
 
 // Helper function to convert text numbers to integers
 function textToNumber(text: string): number | null {
@@ -49,6 +49,7 @@ function textToNumber(text: string): number | null {
 // Property interface - matches current structure
 export interface Property {
   id?: string | number;
+  slug?: string;
   title: string;
   description: string;
   type: string;
@@ -56,6 +57,8 @@ export interface Property {
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
+  areaMin?: number;
+  areaMax?: number;
   location: string;
   city?: string;
   locality?: string;
@@ -77,6 +80,14 @@ export interface Property {
     thirdYear: number;
     fifthYear: number;
   };
+  // Alnair API specific fields
+  latitude?: number;
+  longitude?: number;
+  constructionPercent?: number;
+  totalUnits?: number;
+  agentFee?: number;
+  projectBadges?: string[];
+  salesStatus?: string[];
 }
 
 // Map API property to our Property interface
@@ -127,6 +138,10 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
                    (apiProperty.sq_ft_range?.min ?? apiProperty.sq_ft_range?.max) ??
                    0;
   const area = (typeof areaValue === 'number' && areaValue > 0) ? areaValue : 0;
+  
+  // Area range (min/max)
+  const areaMin = (typeof apiProperty.area_min === 'number' && apiProperty.area_min > 0) ? apiProperty.area_min : area;
+  const areaMax = (typeof apiProperty.area_max === 'number' && apiProperty.area_max > 0) ? apiProperty.area_max : area;
 
   // Bedrooms - always convert to integer (handles text numbers like "one", "two", "three")
   // Use undefined instead of 0 to indicate missing/invalid data
@@ -426,6 +441,7 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
   // Build the return object, only including fields with valid values
   const property: Property = {
     id,
+    slug: apiProperty.slug || undefined,
     title,
     description,
     type,
@@ -447,6 +463,14 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
   // Only add area if it's a valid number > 0
   if (area !== undefined && area > 0) {
     property.area = area;
+  }
+  
+  // Add area range (min/max)
+  if (areaMin !== undefined && areaMin > 0) {
+    property.areaMin = areaMin;
+  }
+  if (areaMax !== undefined && areaMax > 0) {
+    property.areaMax = areaMax;
   }
 
   // Only add bedrooms if it's a valid number > 0
@@ -485,6 +509,36 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
     }
   }
 
+  // Alnair API specific fields
+  if (apiProperty.slug) {
+    property.slug = apiProperty.slug;
+  }
+  if (apiProperty.latitude && !isNaN(parseFloat(String(apiProperty.latitude)))) {
+    property.latitude = parseFloat(String(apiProperty.latitude));
+  }
+  if (apiProperty.longitude && !isNaN(parseFloat(String(apiProperty.longitude)))) {
+    property.longitude = parseFloat(String(apiProperty.longitude));
+  }
+  if (apiProperty.construction_percent !== undefined && apiProperty.construction_percent !== null) {
+    property.constructionPercent = typeof apiProperty.construction_percent === 'number' 
+      ? apiProperty.construction_percent 
+      : parseFloat(String(apiProperty.construction_percent)) || 0;
+  }
+  if (apiProperty.total_units !== undefined && apiProperty.total_units > 0) {
+    property.totalUnits = apiProperty.total_units;
+  }
+  if (apiProperty.agent_fee !== undefined && apiProperty.agent_fee !== null) {
+    property.agentFee = typeof apiProperty.agent_fee === 'number' 
+      ? apiProperty.agent_fee 
+      : parseFloat(String(apiProperty.agent_fee)) || 0;
+  }
+  if (apiProperty.project_badges && Array.isArray(apiProperty.project_badges) && apiProperty.project_badges.length > 0) {
+    property.projectBadges = apiProperty.project_badges;
+  }
+  if (apiProperty.sales_status && Array.isArray(apiProperty.sales_status) && apiProperty.sales_status.length > 0) {
+    property.salesStatus = apiProperty.sales_status;
+  }
+
   return property;
 }
 
@@ -505,7 +559,7 @@ export interface FilterOptions {
 }
 
 // Convert FilterOptions to ApiFilterOptions for API calls
-function convertToApiFilters(filters: FilterOptions): ApiFilterOptions {
+async function convertToApiFilters(filters: FilterOptions): Promise<ApiFilterOptions> {
   const apiFilters: ApiFilterOptions = {};
   
   // Property Type filter - DON'T SEND to backend
@@ -520,9 +574,9 @@ function convertToApiFilters(filters: FilterOptions): ApiFilterOptions {
   // Workaround: Filter client-side instead of sending to backend
   
   // Developer filter - use developer_id if available
-  // Try to convert developer name to developer_id for API filtering
+  // Try to convert developer name to developer_id for API filtering (Alnair uses numeric IDs)
   if (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '') {
-    const developerId = getDeveloperIdByName(filters.developer.trim());
+    const developerId = await getDeveloperIdByNameAsync(filters.developer.trim());
     if (developerId) {
       apiFilters.developer_id = developerId;
     } else {
@@ -685,6 +739,41 @@ export function formatPrice(price: number): string {
   return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Format date string to readable format
+export function formatDate(dateString: string | undefined | null): string {
+  if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
+    return 'TBA';
+  }
+
+  try {
+    // Handle various date formats (ISO, datetime strings, year-only, etc.)
+    const trimmed = dateString.trim();
+    
+    // If it's just a year (4 digits), return as-is
+    if (/^\d{4}$/.test(trimmed)) {
+      return trimmed;
+    }
+    
+    // Try to parse as date
+    const date = new Date(trimmed);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return trimmed; // Return original if can't parse
+    }
+    
+    // Format as "Month Day, Year" (e.g., "December 30, 2026")
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    // If parsing fails, return original string
+    return dateString;
+  }
+}
+
 // Filter properties (DEPRECATED - Now using API-based filtering)
 // This function is kept for backward compatibility but should not be used in new code
 // All filtering should be done via API in getPaginatedProperties which uses convertToApiFilters
@@ -763,23 +852,70 @@ export interface PaginatedPropertiesResult {
   };
 }
 
+// Cache for all properties to avoid refetching on every page change
+let cachedProperties: Property[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export async function getPaginatedProperties(
   filters: FilterOptions = {},
   page: number = 1,
-  limit: number = 20
+  limit: number = 9
 ): Promise<PaginatedPropertiesResult> {
   try {
-    // Determine if we need client-side filtering
-    // Backend has Prisma bugs with type, category, bedrooms filters
-    // Developer filtering can now be done server-side using developer_id
-    const apiFilters = convertToApiFilters(filters);
+    const apiFilters = await convertToApiFilters(filters);
     const hasDeveloperId = !!(apiFilters.developer_id);
+    
+    // Check if we have valid cached properties (no filters applied)
+    const hasFilters = !!(
+      filters.type ||
+      filters.category ||
+      filters.search ||
+      filters.city ||
+      filters.locality ||
+      filters.developer ||
+      (filters.bedrooms !== undefined && filters.bedrooms > 0) ||
+      (filters.minPrice !== undefined && filters.minPrice > 0) ||
+      (filters.maxPrice !== undefined && filters.maxPrice > 0) ||
+      (filters.minArea !== undefined && filters.minArea > 0) ||
+      (filters.maxArea !== undefined && filters.maxArea > 0)
+    );
+    
+    const now = Date.now();
+    const cacheValid = cachedProperties && (now - cacheTimestamp) < CACHE_DURATION;
+    
+    // Use cached properties if available and no filters applied
+    if (!hasFilters && cacheValid && cachedProperties) {
+      const total = cachedProperties.length;
+      const totalPages = Math.ceil(total / limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedProperties = cachedProperties.slice(startIndex, endIndex);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('=== Using Cached Properties ===');
+        console.log('Total cached:', total);
+        console.log('Page:', page, 'of', totalPages);
+        console.log('Showing:', paginatedProperties.length, 'properties');
+      }
+      
+      return {
+        properties: paginatedProperties,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+        },
+      };
+    }
     
     const needsClientSideFiltering = !!(
       filters.type ||
       filters.category ||
+      filters.locality ||
+      filters.city ||
       (filters.bedrooms !== undefined && filters.bedrooms > 0) ||
-      // Only need client-side filtering for developer if developer_id is not available
       (filters.developer && typeof filters.developer === 'string' && filters.developer.trim() !== '' && !hasDeveloperId)
     );
     
@@ -894,6 +1030,69 @@ export async function getPaginatedProperties(
         }
       }
       
+      // Locality filter - filter by district/area name (client-side only, API doesn't support)
+      if (filters.locality && typeof filters.locality === 'string' && filters.locality.trim() !== '') {
+        const localityFilter = filters.locality.trim().toLowerCase();
+        const beforeCount = properties.length;
+        
+        if (process.env.NODE_ENV === 'development') {
+          // Show all unique locality values to help debug
+          const uniqueLocalities = [...new Set(properties.map(p => p.locality).filter(Boolean))];
+          console.log('=== Locality Filter Debug ===');
+          console.log('Filter value:', localityFilter);
+          console.log('Total properties before filter:', beforeCount);
+          console.log('Unique locality values in data:', uniqueLocalities.slice(0, 20));
+          console.log('Sample properties:', properties.slice(0, 3).map(p => ({
+            title: p.title,
+            locality: p.locality,
+            location: p.location
+          })));
+        }
+        
+        properties = properties.filter((p) => {
+          const propertyLocality = (p.locality || '').toLowerCase().trim();
+          const propertyLocation = (p.location || '').toLowerCase().trim();
+          // Check locality field first, then fall back to location field
+          // Support exact match, contains match, and reverse contains
+          const matches = propertyLocality === localityFilter || 
+                         propertyLocality.includes(localityFilter) || 
+                         localityFilter.includes(propertyLocality) ||
+                         propertyLocation === localityFilter ||
+                         propertyLocation.includes(localityFilter) ||
+                         localityFilter.includes(propertyLocation);
+          
+          if (matches && process.env.NODE_ENV === 'development') {
+            console.log(`✓ Matched: ${p.title} (locality: "${p.locality}", location: "${p.location}")`);
+          }
+          
+          return matches;
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Locality filter result: ${beforeCount} -> ${properties.length} properties`);
+          if (properties.length === 0) {
+            console.warn('⚠️ No properties matched! Check if locality values match the filter.');
+          }
+        }
+      }
+      
+      // City filter - filter by city name in location field (client-side only when needed)
+      if (filters.city && typeof filters.city === 'string' && filters.city.trim() !== '') {
+        const cityFilter = filters.city.trim().toLowerCase();
+        const beforeCount = properties.length;
+        properties = properties.filter((p) => {
+          const propertyCity = (p.city || p.location || '').toLowerCase().trim();
+          // Check for exact match or contains match
+          return propertyCity === cityFilter || 
+                 propertyCity.includes(cityFilter) || 
+                 cityFilter.includes(propertyCity);
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`City filter (${cityFilter}): ${beforeCount} -> ${properties.length} properties`);
+        }
+      }
+      
       // Calculate pagination from filtered results
       const total = properties.length;
       const totalPages = Math.ceil(total / limit);
@@ -921,29 +1120,80 @@ export async function getPaginatedProperties(
       };
     }
     
-    // No client-side filtering needed - use API pagination directly
-    const response = await fetchProperties(apiFilters, page, limit);
+    // No client-side filtering needed - fetch all properties and paginate client-side
+    // This ensures proper pagination since Alnair API may have different pagination behavior
+    // Alnair API returns 30 items per page by default, 77 pages total (~2282 properties)
+    const apiLimit = 100; // Request 100 per page to minimize API calls
+    let allProperties: Property[] = [];
     
-    if (response.success && response.data) {
-      const properties = response.data.map(mapApiPropertyToProperty);
-      const total = response.pagination?.total || properties.length;
-      const totalPages = response.pagination?.total_pages || Math.ceil(total / limit);
+    // If we have cached properties and no filters, use cache
+    if (!hasFilters && cacheValid && cachedProperties) {
+      allProperties = cachedProperties;
+    } else {
+      // Fetch all properties by paginating through API
+      let currentApiPage = 1;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const response = await fetchProperties(apiFilters, currentApiPage, apiLimit);
+        
+        if (response.success && response.data && response.data.length > 0) {
+          const mappedProperties = response.data.map(mapApiPropertyToProperty);
+          allProperties = [...allProperties, ...mappedProperties];
+          
+          // Check if there are more pages
+          const totalFromApi = response.pagination?.total || 0;
+          const totalPagesFromApi = response.pagination?.total_pages || 0;
+          hasMore = currentApiPage < totalPagesFromApi && response.data.length > 0;
+          currentApiPage++;
+          
+          // Log progress
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Fetched page ${currentApiPage - 1}/${totalPagesFromApi}: ${mappedProperties.length} properties (total so far: ${allProperties.length}/${totalFromApi})`);
+          }
+          
+          // Safety limit to prevent infinite loops (Alnair has ~77 pages)
+          if (currentApiPage > 100) {
+            console.warn('Reached max API page limit (100)');
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      // Cache the results if no filters applied
+      if (!hasFilters && allProperties.length > 0) {
+        cachedProperties = allProperties;
+        cacheTimestamp = Date.now();
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Cached ${allProperties.length} properties`);
+        }
+      }
+    }
+    
+    if (allProperties.length > 0) {
+      const total = allProperties.length;
+      const totalPages = Math.ceil(total / limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedProperties = allProperties.slice(startIndex, endIndex);
       
       // Debug logging
       if (process.env.NODE_ENV === 'development') {
-        console.log('=== API Filtering ===');
+        console.log('=== Client-Side Pagination ===');
         console.log('Filters applied:', filters);
-        console.log('API Filters:', apiFilters);
-        console.log('Properties returned:', properties.length);
-        console.log('Total:', total);
-        console.log('Total Pages:', totalPages);
+        console.log('Total properties:', total);
+        console.log('Page:', page, 'of', totalPages);
+        console.log('Showing:', paginatedProperties.length, 'properties');
       }
       
       return {
-        properties,
+        properties: paginatedProperties,
         pagination: {
-          page: response.pagination?.page || page,
-          limit: response.pagination?.limit || limit,
+          page,
+          limit,
           total,
           totalPages,
         },

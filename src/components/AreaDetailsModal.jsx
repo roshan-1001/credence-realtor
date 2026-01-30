@@ -129,9 +129,16 @@ const AreaDetailsModal = ({ isOpen, onClose, area }) => {
                             <div>
                                 <div className="flex items-center justify-between mb-6 md:mb-8">
                                     <h3 className="text-xl md:text-2xl font-bold text-secondary">Available Properties</h3>
-                                    <Link href="/properties" onClick={onClose} className="text-[#C5A365] font-bold text-xs md:text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            // Dispatch custom event to apply area filter
+                                            window.dispatchEvent(new CustomEvent('applyAreaFilter', { detail: { locality: area.name } }));
+                                        }}
+                                        className="text-[#C5A365] font-bold text-xs md:text-sm flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+                                    >
                                         View All <ArrowRight size={14} className="md:w-4 md:h-4" />
-                                    </Link>
+                                    </button>
                                 </div>
 
                                 {isLoadingProperties ? (

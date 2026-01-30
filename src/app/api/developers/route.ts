@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Backend API URL - set via environment variable BACKEND_API_URL
-const API_BASE_URL = process.env.BACKEND_API_URL;
-
-if (!API_BASE_URL) {
-  throw new Error('BACKEND_API_URL environment variable is not set. Please add it to your .env.local file.');
-}
+// Alnair API for developers
+const ALNAIR_DEVELOPERS_URL = 'https://api.alnair.ae/developer/find';
 
 // Cache duration: 10 minutes for developers list
 const CACHE_DURATION = 600; // 10 minutes
@@ -38,39 +34,34 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Build the URL with query parameters
-    const baseUrl = API_BASE_URL!.endsWith('/') ? API_BASE_URL!.slice(0, -1) : API_BASE_URL!;
-    const url = new URL(`${baseUrl}/developers`);
+    // Build the Alnair API URL
+    const url = new URL(ALNAIR_DEVELOPERS_URL);
     url.searchParams.append('page', page);
     url.searchParams.append('limit', limit);
-    if (minProjects) {
-      url.searchParams.append('min_projects', minProjects);
-    }
 
     // Log request for debugging
     if (process.env.NODE_ENV === 'development') {
-      console.log('=== Developers API Proxy Request ===');
+      console.log('=== Developers API Request (Alnair) ===');
       console.log('URL:', url.toString());
     }
 
-    // Forward the request to the backend API
+    // Fetch from Alnair API
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      next: { revalidate: 300 },
     });
 
     // Log response for debugging
     if (process.env.NODE_ENV === 'development') {
-      console.log('=== Developers API Proxy Response ===');
+      console.log('=== Developers API Response ===');
       console.log('Status:', response.status);
     }
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Backend API error:', response.status, errorText);
+      console.error('Alnair API error:', response.status, errorText);
       return NextResponse.json(
         { 
           success: false, 
@@ -87,11 +78,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    const alnairData = await response.json();
+    
+    // Transform Alnair response to match expected format
+    const items = alnairData?.data?.items || [];
+    const transformedData = items.map((dev: any) => ({
+      id: dev.id,
+      name: dev.title || dev.name || '',
+      company: {
+        name: dev.title || dev.name || '',
+        logo: dev.logo?.src || '',
+      },
+      project_count: dev.statistics?.projects_count || dev.project_count || 0,
+      logo: dev.logo?.src || '',
+    }));
+    
+    // Filter by min_projects if specified
+    let filteredData = transformedData;
+    if (minProjects) {
+      const minCount = parseInt(minProjects, 10);
+      filteredData = transformedData.filter((dev: any) => dev.project_count >= minCount);
+    }
+    
+    const responseData = {
+      success: true,
+      data: filteredData,
+      pagination: {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        total: alnairData?.count || filteredData.length,
+        total_pages: alnairData?.pages || Math.ceil(filteredData.length / parseInt(limit, 10)),
+      },
+    };
     
     // Store in cache
     cache.set(cacheKey, {
-      data,
+      data: responseData,
       timestamp: now,
     });
 
@@ -104,7 +126,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return response with caching headers
-    return NextResponse.json(data, {
+    return NextResponse.json(responseData, {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
         'X-Cache': 'MISS',

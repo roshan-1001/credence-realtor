@@ -9,7 +9,7 @@ import InquiryModal from '@/components/property/inquiry-modal';
 import DescriptionModal from '@/components/property/description-modal';
 import ImageViewerModal from '@/components/property/image-viewer-modal';
 import AmenitiesModal from '@/components/property/amenities-modal';
-import { getPropertyById, getRelatedProperties, formatPrice, Property } from '@/lib/properties';
+import { getPropertyById, getRelatedProperties, formatPrice, formatDate, Property } from '@/lib/properties';
 import { memo } from 'react';
 
 // Memoized Property Details Grid component
@@ -56,7 +56,11 @@ const PropertyDetailsGrid = memo(({ property, onOpenAmenities }: { property: Pro
         {property.area !== undefined && property.area !== null && property.area > 0 && (
           <div className="flex flex-col gap-1">
             <span className="text-[#61656e] text-xs md:text-sm lg:text-[16px] font-medium leading-[20px] md:leading-[27px]">Area</span>
-            <span className="text-black text-sm md:text-base lg:text-[18px] font-medium leading-[20px] md:leading-[27px]">{property.area} sq. ft</span>
+            <span className="text-black text-sm md:text-base lg:text-[18px] font-medium leading-[20px] md:leading-[27px]">
+              {property.areaMax && property.areaMax > property.area 
+                ? `${property.area.toLocaleString('en-US')} - ${property.areaMax.toLocaleString('en-US')} sq. ft`
+                : `${property.area.toLocaleString('en-US')} sq. ft`}
+            </span>
           </div>
         )}
         
@@ -92,7 +96,7 @@ const PropertyDetailsGrid = memo(({ property, onOpenAmenities }: { property: Pro
         {property.readyDate && typeof property.readyDate === 'string' && property.readyDate.trim() !== '' && (
           <div className="flex flex-col gap-1">
             <span className="text-[#61656e] text-xs md:text-sm lg:text-[16px] font-medium leading-[20px] md:leading-[27px]">Delivery Date</span>
-            <span className="text-black text-sm md:text-base lg:text-[18px] font-medium leading-[20px] md:leading-[27px]">{property.readyDate}</span>
+            <span className="text-black text-sm md:text-base lg:text-[18px] font-medium leading-[20px] md:leading-[27px]">{formatDate(property.readyDate)}</span>
           </div>
         )}
         
@@ -423,23 +427,25 @@ export default function PropertyDetailPage() {
                   )}
                 </div>
 
-                {/* Description with Read More */}
-                <div className="flex-1 min-h-0">
-                  <p className="text-sm md:text-base leading-relaxed text-gray-600">
-                    {descriptionPreview}
-                    {hasMoreDescription && (
-                      <>
-                        ...{' '}
-                        <button
-                          onClick={handleOpenDescription}
-                          className="text-[#C5A365] hover:text-[#b08e55] hover:underline font-semibold transition-colors"
-                        >
-                          Read more
-                        </button>
-                      </>
-                    )}
-                  </p>
-                </div>
+                {/* Description with Read More - only show if description exists */}
+                {property.description && property.description.trim() !== '' && (
+                  <div className="flex-1 min-h-0">
+                    <p className="text-sm md:text-base leading-relaxed text-gray-600">
+                      {descriptionPreview}
+                      {hasMoreDescription && (
+                        <>
+                          ...{' '}
+                          <button
+                            onClick={handleOpenDescription}
+                            className="text-[#C5A365] hover:text-[#b08e55] hover:underline font-semibold transition-colors"
+                          >
+                            Read more
+                          </button>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                )}
 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-3">
@@ -462,7 +468,9 @@ export default function PropertyDetailPage() {
                   )}
                   {property.area !== undefined && property.area !== null && property.area > 0 && (
                     <div className="bg-gray-100 text-secondary text-xs font-semibold px-3 py-1.5 rounded uppercase tracking-wider">
-                      {property.area.toLocaleString('en-US')} sqft
+                      {property.areaMax && property.areaMax > property.area 
+                        ? `${property.area.toLocaleString('en-US')} - ${property.areaMax.toLocaleString('en-US')} sqft`
+                        : `${property.area.toLocaleString('en-US')} sqft`}
                     </div>
                   )}
                 </div>

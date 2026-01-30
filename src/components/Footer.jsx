@@ -13,6 +13,7 @@ import {
     ArrowRight,
     MessageCircle
 } from 'lucide-react';
+import { DEVELOPERS } from '@/utils/developerMapping';
 
 const Footer = () => {
     const handleLanguageChange = (langCode) => {
@@ -134,21 +135,19 @@ const Footer = () => {
                         <div>
                             <h3 className="font-semibold text-white mb-6">Developers</h3>
                             <ul className="space-y-3">
-                                {[
-                                    { name: "Emaar Properties", path: "/properties?developer=EMAAR" },
-                                    { name: "Damac Properties", path: "/properties?developer=DAMAC" },
-                                    { name: "Nakheel", path: "/properties?developer=NAKHEEL" },
-                                    { name: "Sobha Realty", path: "/properties?developer=SOBHA REALTY" },
-                                    { name: "Meraas", path: "/properties?developer=MERAAS" },
-                                    { name: "Dubai Properties", path: "/properties?developer=DUBAI PROPERTIES" },
-                                    { name: "Aldar", path: "/properties?developer=ALDAR" }
-                                ].map((item, i) => (
-                                    <li key={i}>
-                                        <Link href={item.path} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
-                                            {item.name}
-                                        </Link>
-                                    </li>
-                                ))}
+                                {(() => {
+                                    const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+                                    const top10Developers = top10DeveloperIds
+                                        .map(id => DEVELOPERS.find(d => d.id === id))
+                                        .filter(Boolean);
+                                    return top10Developers.map((dev, i) => (
+                                        <li key={i}>
+                                            <Link href={`/properties?developer=${encodeURIComponent(dev.name.toUpperCase())}`} className="text-sm text-gray-400 hover:text-primary transition-colors duration-300 block">
+                                                {dev.name}
+                                            </Link>
+                                        </li>
+                                    ));
+                                })()}
                             </ul>
                         </div>
 

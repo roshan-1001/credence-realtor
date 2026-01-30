@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { geocodeRegion } from "@/utils/geocodeRegion";
 import { formatPrice } from "@/utils/formatPrice";
-import { getDeveloperIdByName, fetchDevelopersMapping } from "@/utils/developerMapping";
+import { getDeveloperIdByName, fetchDevelopersMapping, DEVELOPERS } from "@/utils/developerMapping";
 
 const MultiPropertyMap = dynamic(() => import("@/components/MultiPropertyMap"), {
   ssr: false,
@@ -14,9 +14,22 @@ const PropertyInfoPanel = dynamic(() => import("@/components/PropertyInfoPanel")
   ssr: false,
 });
 
+// Alnair API endpoint (called directly from browser to bypass Cloudflare)
+const ALNAIR_API_URL = 'https://api.alnair.ae/project/find';
+
+// Helper function to get top 10 developers (computed lazily to avoid webpack issues)
+function getTop10DeveloperFilters(): string[] {
+  const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+  const top10Developers = top10DeveloperIds
+    .map(id => DEVELOPERS.find(d => d.id === id))
+    .filter((d): d is NonNullable<typeof d> => d !== undefined);
+  return ["All", ...top10Developers.map(d => d.name.toUpperCase())];
+}
+
 interface Property {
   propertyId: number; // Numeric ID for compatibility with MultiPropertyMap
   id?: string; // UUID from API (for navigation)
+  slug?: string; // Slug for SEO-friendly URLs
   title: string;
   location: string;
   bedrooms: number;
@@ -30,68 +43,28 @@ interface Property {
   longitude?: number;
 }
 
-interface APIProject {
-  id: string;
+// Alnair API response interfaces
+interface AlnairProject {
+  id: number;
+  slug: string;
   title: string;
-  description: string;
-  image_urls: string[];
-  min_price?: number;
-  max_price?: number;
-  address: string;
-  city: string;
-  type: string[];
-  category: string;
-  project_name: string;
-  min_bedrooms?: string;
-  max_bedrooms?: string;
-  min_bathrooms?: string;
-  max_bathrooms?: string;
   latitude?: number;
   longitude?: number;
-  developer?: {
-    company?: {
-      name?: string;
+  logo?: { src: string };
+  cover?: { src: string };
+  construction_percent?: number;
+  builder?: string;
+  district?: { id?: string; title?: string };
+  statistics?: {
+    total?: {
+      price_from?: number;
+      price_to?: number;
+      units_count?: number;
     };
+    units?: Record<string, any>;
   };
+  photos?: { src: string }[];
 }
-
-interface HotspotSearchRequestBody {
-  prioritize_brokerage_id: string;
-  category: string;
-  include_developer: boolean;
-  type?: string;
-  min_bedrooms?: string[];
-  min_price?: number;
-  max_price?: number;
-  developer_id?: string; // Use developer_id instead of search
-  search?: string; // For developer name search (fallback)
-}
-
-// Helper function to convert bedroom enum to number
-const bedroomEnumToNumber = (bedroomEnum?: string): number => {
-  const enumMap: { [key: string]: number } = {
-    "Studio": 0,
-    "One": 1,
-    "Two": 2,
-    "Three": 3,
-    "Four": 4,
-    "Four_Plus": 5,
-    "Five": 5,
-    "Six": 6,
-    "Seven": 7,
-  };
-  return bedroomEnum ? enumMap[bedroomEnum] || 0 : 0;
-};
-
-// Helper function to convert bathroom enum to number
-const bathroomEnumToNumber = (bathroomEnum?: string): number => {
-  const enumMap: { [key: string]: number } = {
-    "One": 1,
-    "Two": 2,
-    "Three_Plus": 3,
-  };
-  return bathroomEnum ? enumMap[bathroomEnum] || 0 : 0;
-};
 
 interface HotspotsProps {
   title?: string;
@@ -111,11 +84,13 @@ export default function Hotspots({
   showFilters = true,
   filterOptions = ["All", "Villa", "2 BHK", "3 BHK", "1 BHK"],
   className = "",
-  developerFilters = ["All", "EMAAR", "DAMAC", "SOBHA", "MERAAS", "AZIZI", "NAKHEEL"],
+  developerFilters,
   showDeveloperFilters = false,
   selectedDeveloper: externalSelectedDeveloper,
   onDeveloperChange
 }: HotspotsProps = {}) {
+  // Compute default developer filters if not provided (lazy evaluation to avoid webpack issues)
+  const effectiveDeveloperFilters = developerFilters ?? getTop10DeveloperFilters();
   const [propertyType, setPropertyType] = useState("All");
   const [internalSelectedDeveloper, setInternalSelectedDeveloper] = useState("All");
   const [properties, setProperties] = useState<Property[]>([]);
@@ -153,220 +128,130 @@ export default function Hotspots({
   };
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchPropertiesFromAlnair = async () => {
       setIsLoading(true);
       try {
-        // Use the API route that proxies to the backend
-        const baseUrl = "/api/projects";
+        // Call Alnair API directly from browser (bypasses Cloudflare server-side blocking)
+        const url = new URL(ALNAIR_API_URL);
+        url.searchParams.append('limit', '100');
+        url.searchParams.append('page', '1');
+        
+        // Filter for Dubai only (city_id=1)
+        url.searchParams.append('city_id', '1');
+        
+        // Add bounding box for Dubai area to get more accurate results
+        url.searchParams.append('search_area[east]', '56.0');
+        url.searchParams.append('search_area[north]', '25.5');
+        url.searchParams.append('search_area[south]', '24.5');
+        url.searchParams.append('search_area[west]', '54.5');
+        url.searchParams.append('has_cluster', '0');
+        url.searchParams.append('has_boundary', '0');
+        url.searchParams.append('zoom', '11');
 
-        // Build request body for new API
-        const requestBody: HotspotSearchRequestBody = {
-          // Always prioritize brokerage_id projects first
-          prioritize_brokerage_id: "cc3e22bb-5ee1-443a-a4b0-47c33f0d9040",
-          // Market type is always offPlan for hotspots
-          category: "Off_plan",
-          // Include developer information
-          include_developer: true,
-        };
-
-        // Note: Property type filter removed due to backend Prisma bug
-        // Property type filters are kept for UI but don't filter server-side
-
-        // Handle BHK types - filter by bedroom count using enum
-        if (propertyType === "1 BHK") {
-          requestBody.min_bedrooms = ["One"];
-        } else if (propertyType === "2 BHK") {
-          requestBody.min_bedrooms = ["Two"];
-        } else if (propertyType === "3 BHK") {
-          requestBody.min_bedrooms = ["Three"];
-        }
-
-        // Use developer_id for filtering if developer is selected
+        // Add developer filter if selected
         if (selectedDeveloper && selectedDeveloper !== "All") {
-          // Try to get developer ID from mapping
-          const developerId = developerMapping.get(selectedDeveloper.toUpperCase()) || 
-                             getDeveloperIdByName(selectedDeveloper);
-          
+          const developerId = developerMapping.get(selectedDeveloper.toLowerCase());
           if (developerId) {
-            requestBody.developer_id = developerId;
-            console.log(`Using developer_id filter: ${developerId} for "${selectedDeveloper}"`);
-          } else {
-            // Fallback to search if ID not found
-            console.warn(`Developer ID not found for "${selectedDeveloper}", falling back to search`);
-            requestBody.search = selectedDeveloper;
+            url.searchParams.append('builder_id', developerId);
+            console.log(`Filtering by developer ${selectedDeveloper} (ID: ${developerId})`);
           }
         }
 
-        // Build query parameters for pagination
-        const queryParams = new URLSearchParams();
-        queryParams.append("page", "1");
-        queryParams.append("limit", "100"); // API max is 100
+        console.log(`Fetching properties from Alnair API for ${propertyType}${selectedDeveloper && selectedDeveloper !== "All" ? ` and ${selectedDeveloper}` : ""}`);
 
-        const apiUrl = `${baseUrl}?${queryParams.toString()}`;
-
-        console.log(`Fetching ${propertyType} properties:`, requestBody);
-
-        const res = await fetch(apiUrl, {
-          method: "POST",
+        const response = await fetch(url.toString(), {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Accept': 'application/json',
           },
-          body: JSON.stringify(requestBody),
         });
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          const errorMessage = errorData.message || errorData.error || `API error: ${res.status} ${res.statusText}`;
-          console.error('API request failed:', errorMessage);
-          throw new Error(errorMessage);
+        if (!response.ok) {
+          throw new Error(`Alnair API error: ${response.status}`);
         }
 
-        const data = await res.json();
-        
-        // Handle API response structure according to Postman collection
-        // Response can be: { data: [...], pagination: {...} } or { success: false, data: [], message: "..." }
-        let records: APIProject[] = [];
-        
-        if (data.success === false) {
-          console.error('API returned error:', data.message || data.error);
-          setProperties([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Extract data array from response
-        if (Array.isArray(data.data)) {
-          records = data.data;
-        } else if (Array.isArray(data)) {
-          // Fallback: if response is directly an array
-          records = data;
-        }
+        const alnairData = await response.json();
+        const items: AlnairProject[] = alnairData?.data?.items || [];
 
-        console.log(`API returned ${records.length} properties`, {
-          total: data.pagination?.total || records.length,
-          page: data.pagination?.page || 1,
-          totalPages: data.pagination?.totalPages || 1,
-          searchTerm: selectedDeveloper && selectedDeveloper !== "All" ? selectedDeveloper : "none"
-        });
-        
-        // Log unique developer names in response for debugging
-        if (records.length > 0) {
-          const uniqueDevelopers = [...new Set(
-            records
-              .map((r: APIProject) => {
-                if (typeof r.developer === 'string') return r.developer;
-                if (r.developer?.company?.name) return r.developer.company.name;
-                if ((r.developer as any)?.name) return (r.developer as any).name;
-                if ((r as any).developer_name) return (r as any).developer_name;
-                return null;
-              })
-              .filter(Boolean)
-          )];
-          console.log(`Unique developers in API response (${uniqueDevelopers.length}):`, uniqueDevelopers.slice(0, 15));
-        }
+        console.log(`Alnair API returned ${items.length} properties`);
 
-        // Map API response to Property format
-        let mappedProperties: Property[] = records.map((item: APIProject, index: number) => {
-          // Generate a numeric propertyId from UUID for compatibility
-          // Use a better hash function to reduce collisions
-          const uuidHash = item.id
-            .replace(/-/g, "")
-            .split("")
-            .reduce((acc, char, idx) => acc + (char.charCodeAt(0) * (idx + 1)), 0);
-          // Combine with index to ensure uniqueness even if hash collides
-          const numericId = (uuidHash + index) % 1000000;
+        // Map Alnair response to Property format
+        let mappedProperties: Property[] = items.map((item: AlnairProject, index: number) => {
+          // Generate a numeric propertyId for compatibility with MultiPropertyMap
+          const numericId = (item.id + index) % 1000000;
 
-          const bedrooms = bedroomEnumToNumber(item.min_bedrooms || item.max_bedrooms);
-          const bathrooms = bathroomEnumToNumber(item.min_bathrooms || item.max_bathrooms);
-
-          // Extract developer name from multiple possible structures
-          let developerName: string | undefined = undefined;
-          if (item.developer) {
-            if (typeof item.developer === 'string') {
-              developerName = item.developer;
-            } else if (item.developer.company?.name) {
-              developerName = item.developer.company.name;
-            } else if ((item.developer as any).name) {
-              developerName = (item.developer as any).name;
+          // Extract bedroom count from statistics.units
+          let bedrooms = 0;
+          const units = item.statistics?.units || {};
+          Object.keys(units).forEach(key => {
+            const match = key.match(/(\d+)\s*BR|bedroom/i);
+            if (match) {
+              const br = parseInt(match[1], 10);
+              if (br > bedrooms) bedrooms = br;
             }
-          }
-          // Also check for developer_name field directly on item
-          if (!developerName && (item as any).developer_name) {
-            developerName = (item as any).developer_name;
-          }
+            if (key.toLowerCase().includes('studio')) {
+              bedrooms = bedrooms || 0;
+            }
+          });
+
+          // Get images
+          const photos = item.photos || [];
+          const mainImage = item.cover?.src || item.logo?.src || (photos[0]?.src) || '';
+          const images = photos.map((p: { src: string }) => p.src).filter((src: string) => src);
 
           return {
-            propertyId: numericId, // Keep numeric for compatibility
-            id: item.id, // Store UUID
-            title: item.title || item.project_name || "Untitled Property",
-            description: item.description || "",
-            location: item.city || item.address || "N/A",
+            propertyId: numericId,
+            id: item.id?.toString(),
+            slug: item.slug,
+            title: item.title || "Untitled Property",
+            description: "",
+            location: item.district?.title || "Dubai",
             bedrooms,
-            bathrooms,
-            price: item.min_price || item.max_price || 0,
-            images: item.image_urls || [],
-            developer: developerName,
-            propertyType: item.type || [],
+            bathrooms: 0,
+            price: item.statistics?.total?.price_from || item.statistics?.total?.price_to || 0,
+            images: images.length > 0 ? images : [mainImage].filter(Boolean),
+            developer: item.builder || undefined,
+            propertyType: [],
             latitude: item.latitude,
             longitude: item.longitude,
           };
         });
 
-        // Filter out properties with "sartawi properties" in description
-        mappedProperties = mappedProperties.filter((property: Property) => {
-          const description = property.description?.toLowerCase() || '';
-          const hasSartawi = description.includes('sartawi properties');
-          if (hasSartawi) {
-            console.log(`Filtered out: ${property.title} - contains 'sartawi properties'`);
-          }
-          return !hasSartawi;
-        });
-
-        // For BHK types, ensure we filter by exact bedroom count
+        // Filter by bedroom count if BHK type is selected
         if (propertyType === "1 BHK") {
           mappedProperties = mappedProperties.filter((p) => p.bedrooms === 1);
         } else if (propertyType === "2 BHK") {
           mappedProperties = mappedProperties.filter((p) => p.bedrooms === 2);
         } else if (propertyType === "3 BHK") {
           mappedProperties = mappedProperties.filter((p) => p.bedrooms === 3);
+        } else if (propertyType === "Villa") {
+          // Filter by title containing villa
+          mappedProperties = mappedProperties.filter((p) => 
+            p.title.toLowerCase().includes('villa')
+          );
         }
 
-        // Note: Developer filtering is now done server-side using developer_id
-        // No need for client-side filtering when developer_id is used
-        // Only filter client-side if we had to fall back to search parameter
-        if (selectedDeveloper && selectedDeveloper !== "All" && !requestBody.developer_id) {
-          // Fallback: client-side filtering when developer_id is not available
-          const beforeFilter = mappedProperties.length;
-          const searchTerm = selectedDeveloper.toUpperCase().trim();
-          
-          mappedProperties = mappedProperties.filter((p) => {
-            const developerName = (p.developer || "").toUpperCase().trim();
-            if (!developerName) return false;
-            return developerName.includes(searchTerm) || developerName.startsWith(searchTerm);
-          });
-          
-          console.log(`Developer filter (fallback) "${selectedDeveloper}": ${beforeFilter} -> ${mappedProperties.length} properties`);
-        }
+        // Note: Developer filtering is now done via API builder_id parameter
 
-        console.log(`After filtering: ${mappedProperties.length} properties remain for ${propertyType}${selectedDeveloper && selectedDeveloper !== "All" ? ` and ${selectedDeveloper}` : ""}`);
+        console.log(`After filtering: ${mappedProperties.length} properties remain`);
 
-        // Show all properties
         setProperties(mappedProperties);
-        // Reset selected property when filter changes
         setSelectedProperty(null);
       } catch (error) {
-        console.error("Error fetching properties:", error);
+        console.error("Error fetching properties from Alnair:", error);
         setProperties([]);
-        // Optionally show user-friendly error message
-        if (error instanceof Error) {
-          console.error("Error details:", error.message);
-        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProperties();
+    // Only fetch if developer mapping is ready when developer filter is selected
+    if (selectedDeveloper !== "All" && developerMapping.size === 0) {
+      // Wait for developer mapping to load
+      return;
+    }
+
+    fetchPropertiesFromAlnair();
   }, [propertyType, selectedDeveloper, developerMapping]);
 
   // Geocode properties to get coordinates
@@ -433,7 +318,7 @@ export default function Hotspots({
       {/* Developer Filter Buttons */}
       {showDeveloperFilters && (
         <div className="flex flex-wrap justify-center gap-3 mb-6">
-          {developerFilters.map((developer) => (
+          {effectiveDeveloperFilters.map((developer) => (
             <button
               key={developer}
               onClick={() => {

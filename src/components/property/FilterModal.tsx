@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FilterOptions } from '../../lib/properties';
+import { getAllDevelopers } from '@/utils/developerMapping';
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -16,33 +17,24 @@ export default function FilterModal({ isOpen, onClose, filters, onApplyFilters }
   const [developers, setDevelopers] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoadingDevelopers, setIsLoadingDevelopers] = useState(false);
 
-  // Fetch developers for the developer filter
+  // Load developers from static list
   useEffect(() => {
     if (isOpen) {
-      const fetchDevelopers = async () => {
-        setIsLoadingDevelopers(true);
-        try {
-          const res = await fetch('/api/developers?page=1&limit=100&min_projects=1');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success !== false && data.data) {
-              const developersList = data.data
-                .map((dev: any) => ({
-                  id: dev.id,
-                  name: dev.Company?.name || dev.name || '',
-                }))
-                .filter((dev: any) => dev.name)
-                .sort((a: any, b: any) => a.name.localeCompare(b.name));
-              setDevelopers(developersList);
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching developers:', err);
-        } finally {
-          setIsLoadingDevelopers(false);
-        }
-      };
-      fetchDevelopers();
+      setIsLoadingDevelopers(true);
+      try {
+        const allDevs = getAllDevelopers();
+        const developersList = allDevs
+          .map((dev) => ({
+            id: dev.id.toString(),
+            name: dev.name,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setDevelopers(developersList);
+      } catch (err) {
+        console.error('Error loading developers:', err);
+      } finally {
+        setIsLoadingDevelopers(false);
+      }
     }
   }, [isOpen]);
 

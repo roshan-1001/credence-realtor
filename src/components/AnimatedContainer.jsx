@@ -12,54 +12,69 @@ export default function AnimatedContainer({ children, className = '' }) {
     const container = containerRef.current;
     if (!container) return;
 
-    const items = container.querySelectorAll('.stagger-item');
-    if (items.length === 0) return;
+    // Reset all items first to ensure clean state
+    const allItems = container.querySelectorAll('.stagger-item');
+    allItems.forEach((item) => {
+      item.classList.remove('is-visible');
+    });
 
-    const checkInitialVisibility = () => {
-      requestAnimationFrame(() => {
-        const rect = container.getBoundingClientRect();
-        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-        const isInView = rect.top < windowHeight + 200 && rect.bottom > -100;
-        
-        if (isInView) {
-          items.forEach((item) => {
-            if (!item.classList.contains('is-visible')) {
-              item.classList.add('is-visible');
-            }
-          });
-        }
-      });
-    };
+    // Small delay to ensure DOM is fully updated
+    const initTimer = setTimeout(() => {
+      const items = container.querySelectorAll('.stagger-item');
+      if (items.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+      const checkInitialVisibility = () => {
+        requestAnimationFrame(() => {
+          const rect = container.getBoundingClientRect();
+          const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+          const isInView = rect.top < windowHeight + 200 && rect.bottom > -100;
+          
+          if (isInView) {
             items.forEach((item) => {
-              item.classList.add('is-visible');
+              if (!item.classList.contains('is-visible')) {
+                item.classList.add('is-visible');
+              }
             });
-            observer.unobserve(entry.target);
           }
         });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '-50px'
-      }
-    );
+      };
 
-    observer.observe(container);
-    
-    // Check initial visibility - run multiple times
-    checkInitialVisibility();
-    setTimeout(checkInitialVisibility, 50);
-    setTimeout(checkInitialVisibility, 200);
-    setTimeout(checkInitialVisibility, 500);
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const currentItems = container.querySelectorAll('.stagger-item');
+              currentItems.forEach((item) => {
+                item.classList.add('is-visible');
+              });
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: '-50px'
+        }
+      );
+
+      observer.observe(container);
+      
+      // Check initial visibility
+      checkInitialVisibility();
+      const timer1 = setTimeout(checkInitialVisibility, 50);
+      const timer2 = setTimeout(checkInitialVisibility, 150);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        observer.disconnect();
+      };
+    }, 10);
 
     return () => {
-      observer.unobserve(container);
+      clearTimeout(initTimer);
     };
-  }, []);
+  }, [children]);
   
   return (
     <div ref={containerRef} className={`stagger-container ${className}`}>

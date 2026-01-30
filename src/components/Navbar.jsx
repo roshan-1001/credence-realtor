@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Menu, X, Phone, MessageCircle, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { DEVELOPERS } from '@/utils/developerMapping';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -29,15 +30,16 @@ const Navbar = () => {
         {
             name: "Developers",
             path: "/developers",
-            subItems: [
-                { name: "Emaar Properties", path: "/properties?developer=EMAAR" },
-                { name: "Damac Properties", path: "/properties?developer=DAMAC" },
-                { name: "Nakheel", path: "/properties?developer=NAKHEEL" },
-                { name: "Sobha Realty", path: "/properties?developer=SOBHA REALTY" },
-                { name: "Meraas", path: "/properties?developer=MERAAS" },
-                { name: "Dubai Properties", path: "/properties?developer=DUBAI PROPERTIES" },
-                { name: "Aldar", path: "/properties?developer=ALDAR" }
-            ]
+            subItems: (() => {
+                const top10DeveloperIds = [6, 442, 89, 988, 64, 335, 510, 55, 69, 536];
+                const top10Developers = top10DeveloperIds
+                    .map(id => DEVELOPERS.find(d => d.id === id))
+                    .filter(Boolean);
+                return top10Developers.map(d => ({
+                    name: d.name,
+                    path: `/properties?developer=${encodeURIComponent(d.name.toUpperCase())}`
+                }));
+            })()
         },
         {
             name: "Services",

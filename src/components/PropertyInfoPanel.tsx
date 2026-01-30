@@ -8,6 +8,7 @@ import { formatPrice } from "@/utils/formatPrice";
 interface Property {
   propertyId: number;
   id?: string;
+  slug?: string;
   title: string;
   location: string;
   bedrooms: number;
@@ -25,7 +26,7 @@ interface Props {
 }
 
 export default function PropertyInfoPanel({ property, onClose }: Props) {
-  const propertyId = property.id || property.propertyId;
+  const propertyId = property.slug || property.id || property.propertyId;
 
   return (
     <div

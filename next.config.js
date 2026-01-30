@@ -11,6 +11,14 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'new-projects-media.propertyfinder.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'files.alnair.ae',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.alnair.ae',
+      },
     ],
     unoptimized: false,
   },
