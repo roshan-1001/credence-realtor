@@ -523,11 +523,11 @@ const HomeContent = () => {
                 <div className="bg-white py-16 text-black relative overflow-hidden">
                     <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-7xl">
                         <Hotspots
-                            title="Choose from Top Developers"
+                            title="Explore Properties by Area"
                             showTitle={true}
                             showFilters={false}
-                            showDeveloperFilters={true}
-                            developerFilters={["All", ...top10Developers.map(d => d.name.toUpperCase())]}
+                            showAreaFilters={true}
+                            areaFilters={["All", "Business Bay", "Meydan", "Motor City", "Dubai Hills Estate", "JLT", "JVC", "Arjan", "Dubai South"]}
                             filterOptions={["All", "Villa", "2 BHK", "3 BHK", "1 BHK"]}
                             className="px-0 py-0"
                         />

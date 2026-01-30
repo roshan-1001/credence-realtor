@@ -76,6 +76,10 @@ interface HotspotsProps {
   showDeveloperFilters?: boolean;
   selectedDeveloper?: string;
   onDeveloperChange?: (developer: string) => void;
+  areaFilters?: string[];
+  showAreaFilters?: boolean;
+  selectedArea?: string;
+  onAreaChange?: (area: string) => void;
 }
 
 export default function Hotspots({ 
@@ -87,12 +91,18 @@ export default function Hotspots({
   developerFilters,
   showDeveloperFilters = false,
   selectedDeveloper: externalSelectedDeveloper,
-  onDeveloperChange
+  onDeveloperChange,
+  areaFilters,
+  showAreaFilters = false,
+  selectedArea: externalSelectedArea,
+  onAreaChange
 }: HotspotsProps = {}) {
   // Compute default developer filters if not provided (lazy evaluation to avoid webpack issues)
   const effectiveDeveloperFilters = developerFilters ?? getTop10DeveloperFilters();
+  const effectiveAreaFilters = areaFilters ?? ["All"];
   const [propertyType, setPropertyType] = useState("All");
   const [internalSelectedDeveloper, setInternalSelectedDeveloper] = useState("All");
+  const [internalSelectedArea, setInternalSelectedArea] = useState("All");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -100,12 +110,21 @@ export default function Hotspots({
   
   // Use external developer if provided, otherwise use internal state
   const selectedDeveloper = externalSelectedDeveloper !== undefined ? externalSelectedDeveloper : internalSelectedDeveloper;
+  const selectedArea = externalSelectedArea !== undefined ? externalSelectedArea : internalSelectedArea;
   
   const handleDeveloperChange = (developer: string) => {
     if (onDeveloperChange) {
       onDeveloperChange(developer);
     } else {
       setInternalSelectedDeveloper(developer);
+    }
+  };
+
+  const handleAreaChange = (area: string) => {
+    if (onAreaChange) {
+      onAreaChange(area);
+    } else {
+      setInternalSelectedArea(area);
     }
   };
 
@@ -157,7 +176,13 @@ export default function Hotspots({
           }
         }
 
-        console.log(`Fetching properties from Alnair API for ${propertyType}${selectedDeveloper && selectedDeveloper !== "All" ? ` and ${selectedDeveloper}` : ""}`);
+        // Add area filter if selected
+        if (selectedArea && selectedArea !== "All") {
+          // Use district title for filtering
+          console.log(`Filtering by area: ${selectedArea}`);
+        }
+
+        console.log(`Fetching properties from Alnair API for ${propertyType}${selectedDeveloper && selectedDeveloper !== "All" ? ` and ${selectedDeveloper}` : ""}${selectedArea && selectedArea !== "All" ? ` in ${selectedArea}` : ""}`);
 
         const response = await fetch(url.toString(), {
           method: 'GET',
@@ -199,7 +224,7 @@ export default function Hotspots({
           const mainImage = item.cover?.src || item.logo?.src || (photos[0]?.src) || '';
           const images = photos.map((p: { src: string }) => p.src).filter((src: string) => src);
 
-          return {
+          const property = {
             propertyId: numericId,
             id: item.id?.toString(),
             slug: item.slug,
@@ -215,6 +240,13 @@ export default function Hotspots({
             latitude: item.latitude,
             longitude: item.longitude,
           };
+
+          // Debug logging for location data
+          if (process.env.NODE_ENV === 'development' && item.district?.title) {
+            console.log(`Property: ${item.title}, Location: ${item.district.title}`);
+          }
+
+          return property;
         });
 
         // Filter by bedroom count if BHK type is selected
@@ -229,6 +261,45 @@ export default function Hotspots({
           mappedProperties = mappedProperties.filter((p) => 
             p.title.toLowerCase().includes('villa')
           );
+        }
+
+        // Filter by area if selected
+        if (selectedArea && selectedArea !== "All") {
+          const normalizedArea = selectedArea.toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          mappedProperties = mappedProperties.filter((p) => {
+            if (!p.location) return false;
+            
+            const normalizedLocation = p.location.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            // Handle abbreviations and variations
+            const areaMap: { [key: string]: string[] } = {
+              'dubaimarina': ['marina', 'dubaimarina', 'themarina'],
+              'downtowndubai': ['downtown', 'downtowndubai', 'downtowndxb', 'burjkhalifa'],
+              'businessbay': ['businessbay', 'business', 'bay'],
+              'dubaihillsestate': ['dubaihills', 'dubaihillsestate', 'hills', 'hillsestate'],
+              'jlt': ['jumeirah lake towers', 'jlt', 'jumeirahl aketowers', 'jumeirahlaketowers'],
+              'jvc': ['jumeirah village circle', 'jvc', 'jumeirahvillagecircle'],
+              'jvt': ['jumeirah village triangle', 'jvt', 'jumeirahvillagetriangle'],
+              'arjan': ['arjan'],
+              'dubaisouth': ['dubaisouth', 'south']
+            };
+            
+            // Check if current area matches any mapped aliases
+            const aliases = areaMap[normalizedArea] || [normalizedArea];
+            const matched = aliases.some(alias => {
+              const normalizedAlias = alias.replace(/[^a-z0-9]/g, '');
+              return normalizedLocation.includes(normalizedAlias) || normalizedAlias.includes(normalizedLocation);
+            });
+            
+            if (matched && process.env.NODE_ENV === 'development') {
+              console.log(`✓ Matched: ${p.title} in ${p.location} for filter "${selectedArea}"`);
+            }
+            
+            return matched;
+          });
+          
+          console.log(`Filtered by area "${selectedArea}": ${mappedProperties.length} properties found`);
         }
 
         // Note: Developer filtering is now done via API builder_id parameter
@@ -252,7 +323,7 @@ export default function Hotspots({
     }
 
     fetchPropertiesFromAlnair();
-  }, [propertyType, selectedDeveloper, developerMapping]);
+  }, [propertyType, selectedDeveloper, selectedArea, developerMapping]);
 
   // Geocode properties to get coordinates
   useEffect(() => {
@@ -336,6 +407,32 @@ export default function Hotspots({
               }`}
             >
               {developer}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Area Filter Buttons */}
+      {showAreaFilters && (
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
+          {effectiveAreaFilters.map((area) => (
+            <button
+              key={area}
+              onClick={() => {
+                console.log(`Area filter clicked: ${area}`);
+                handleAreaChange(area);
+              }}
+              className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                selectedArea === area
+                  ? isDarkBackground
+                    ? "bg-white text-black border border-white"
+                    : "bg-[#C5A365] text-white shadow-md"
+                  : isDarkBackground
+                  ? "bg-transparent text-gray-400 border border-white/20 hover:border-white hover:text-white hover:bg-white/10"
+                  : "bg-white text-gray-700 border border-gray-300 hover:border-[#C5A365] hover:text-[#C5A365] hover:shadow-md"
+              }`}
+            >
+              {area}
             </button>
           ))}
         </div>

@@ -21,6 +21,7 @@ const Navbar = () => {
                 { name: "Off-Plan Properties", path: "/properties" },
                 { name: "Affordable Properties", path: "/properties" },
                 { name: "Luxury Residences", path: "/properties" },
+                { name: "Commercial Properties", path: "/properties?search=Commercial" },
                 { name: "Waterfront Properties", path: "/properties" },
                 { name: "Featured Listings", path: "/properties" },
                 { name: "Why Buy in Dubai", path: "/blogs#market" },

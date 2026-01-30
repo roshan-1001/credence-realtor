@@ -97,15 +97,22 @@ const Footer = () => {
                                 Serving international investors since 2010.
                             </p>
                             <div className="flex gap-4">
-                                {[Instagram, Linkedin, Facebook].map((Icon, i) => (
-                                    <a
-                                        key={i}
-                                        href="#"
-                                        className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white hover:bg-primary hover:text-white transition-colors duration-300"
-                                    >
-                                        <Icon size={18} />
-                                    </a>
-                                ))}
+                                <a
+                                    href="https://www.instagram.com/credencerealtor_?igsh=eHB3OG40cG45aWVm"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white hover:bg-primary hover:text-white transition-colors duration-300"
+                                >
+                                    <Instagram size={18} />
+                                </a>
+                                <a
+                                    href="https://www.facebook.com/share/16qGYEAyiB/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white hover:bg-primary hover:text-white transition-colors duration-300"
+                                >
+                                    <Facebook size={18} />
+                                </a>
                             </div>
                         </div>
 
@@ -117,6 +124,7 @@ const Footer = () => {
                                     { name: "Off-Plan Properties", path: "/properties" },
                                     { name: "Affordable Properties", path: "/properties" },
                                     { name: "Luxury Residences", path: "/properties" },
+                                    { name: "Commercial Properties", path: "/properties?search=Commercial" },
                                     { name: "Waterfront Properties", path: "/properties" },
                                     { name: "Featured Listings", path: "/properties" },
                                     { name: "Why Buy in Dubai", path: "/blogs#market" },
