@@ -131,6 +131,8 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [relatedProperties, setRelatedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [projectDescription, setProjectDescription] = useState<string>('');
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -141,6 +143,7 @@ export default function PropertyDetailPage() {
     const loadProperty = async () => {
       if (id) {
         setIsLoading(true);
+        setProjectDescription('');
         
         // Minimum loading time to prevent flickering (400ms for detail page)
         const minLoadingTime = 400;
@@ -187,6 +190,30 @@ export default function PropertyDetailPage() {
     loadProperty();
   }, [id]);
 
+  // Fetch project description from Alnair look API (authenticated) - runs when property has slug
+  useEffect(() => {
+    const slug = property?.slug || (property?.id && typeof property.id === 'string' && !/^\d+$/.test(property.id) ? property.id : null);
+    if (!slug) return;
+    const existingDesc = (property?.description || '').trim();
+    if (existingDesc && existingDesc.length > 50) {
+      setProjectDescription(existingDesc);
+      setIsLoadingDescription(false);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingDescription(true);
+    fetch(`/api/project/look/${encodeURIComponent(slug)}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!cancelled && data?.data?.description) {
+          setProjectDescription(data.data.description);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoadingDescription(false); });
+    return () => { cancelled = true; };
+  }, [property?.slug, property?.id]);
+
   // Memoize modal handlers (must be before early returns)
   const handleOpenInquiry = useCallback(() => setIsModalOpen(true), []);
   const handleCloseInquiry = useCallback(() => setIsModalOpen(false), []);
@@ -220,18 +247,17 @@ export default function PropertyDetailPage() {
       : ['https://via.placeholder.com/800x600?text=No+Image'];
   }, [property]);
   
+  const displayDescription = projectDescription || property?.description || '';
   const descriptionPreview = useMemo(() => {
-    if (!property?.description) return '';
-    const raw = property.description;
-    const plain = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!displayDescription) return '';
+    const plain = displayDescription.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     return plain.length > 200 ? plain.substring(0, 200) : plain;
-  }, [property]);
-  
+  }, [displayDescription]);
   const hasMoreDescription = useMemo(() => {
-    if (!property?.description) return false;
-    const plain = property.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!displayDescription) return false;
+    const plain = displayDescription.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     return plain.length > 200;
-  }, [property]);
+  }, [displayDescription]);
 
   // Memoize related properties section
   const relatedPropertiesSection = useMemo(() => {
@@ -430,9 +456,12 @@ export default function PropertyDetailPage() {
                   )}
                 </div>
 
-                {/* Description with Read More - only show if description exists */}
-                {property.description && property.description.trim() !== '' && (
+                {/* Description with Read More - from Alnair look API */}
+                {(displayDescription || isLoadingDescription) && (
                   <div className="flex-1 min-h-0">
+                    {isLoadingDescription ? (
+                      <p className="text-sm text-gray-400 animate-pulse">Loading project description...</p>
+                    ) : (
                     <p className="text-sm md:text-base leading-relaxed text-gray-600 line-clamp-3">
                       {descriptionPreview}
                       {hasMoreDescription && (
@@ -447,6 +476,7 @@ export default function PropertyDetailPage() {
                         </>
                       )}
                     </p>
+                    )}
                   </div>
                 )}
 
@@ -511,6 +541,27 @@ export default function PropertyDetailPage() {
           {/* Property Details Grid */}
           <PropertyDetailsGrid property={property} onOpenAmenities={handleOpenAmenities} />
 
+          {/* Project Description - from Alnair look API (authenticated) */}
+          {(displayDescription || isLoadingDescription) && (
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 md:p-6 lg:p-8 mb-8">
+              <h2 className="font-display font-bold text-2xl md:text-3xl text-secondary mb-6">
+                Project Description
+              </h2>
+              {isLoadingDescription ? (
+                <p className="text-gray-400 animate-pulse">Loading project description from Alnair...</p>
+              ) : displayDescription && /<[a-z][\s\S]*>/i.test(displayDescription) ? (
+                <div
+                  className="text-gray-600 text-sm md:text-base leading-relaxed prose prose-p:my-2 prose-ul:my-2 prose-li:my-0 max-w-none"
+                  dangerouslySetInnerHTML={{ __html: displayDescription }}
+                />
+              ) : displayDescription ? (
+                <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                  {displayDescription}
+                </p>
+              ) : null}
+            </div>
+          )}
+
           {/* Related Properties - Memoized */}
           {relatedPropertiesSection}
         </div>
@@ -527,7 +578,7 @@ export default function PropertyDetailPage() {
           isOpen={isDescriptionModalOpen}
           onClose={handleCloseDescription}
           title={property.title}
-          description={property.description}
+          description={displayDescription || property.description}
         />
 
         <ImageViewerModal

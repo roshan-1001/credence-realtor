@@ -7,9 +7,14 @@ function transformProject(project: any) {
   const stats = project.statistics?.total || {};
   const minPrice = stats.price_from || 0;
   const maxPrice = stats.price_to || 0;
-  const photos = project.photos || [];
-  const mainImage = project.cover?.src || project.logo?.src || photos[0]?.src || null;
-  const gallery = photos.map((p: any) => p.src).filter((src: string) => src && src !== mainImage);
+  const photos = Array.isArray(project.photos) ? project.photos : [];
+  const coverSrc = typeof project.cover === 'string' ? project.cover : (project.cover?.src || project.cover?.logo);
+  const logoSrc = typeof project.logo === 'string' ? project.logo : (project.logo?.src || project.logo?.logo);
+  const firstPhotoSrc = photos[0] && (typeof photos[0] === 'string' ? photos[0] : (photos[0].src || photos[0].logo));
+  const mainImage = coverSrc || logoSrc || firstPhotoSrc || null;
+  const gallery = photos
+    .map((p: any) => (typeof p === 'string' ? p : (p?.src || p?.logo)))
+    .filter((src: string) => src && src !== mainImage);
 
   let readyDate = project.construction_inspection_date;
   if (readyDate && typeof readyDate === 'string') {
@@ -27,8 +32,8 @@ function transformProject(project: any) {
     maxPrice,
     mainImage,
     gallery,
-    location: project.district?.title || '',
-    locality: project.district?.title || '',
+    location: (project.district?.title || project.district || '') || '',
+    locality: (project.district?.title || project.district || '') || '',
     city: 'Dubai',
     developer: project.builder || '',
     readyDate: readyDate || null,
