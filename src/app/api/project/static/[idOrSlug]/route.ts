@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pathModule from 'path';
-import fs from 'fs';
+// Import JSON at build time - ensures it works on Vercel (fs.readFileSync can fail in serverless)
+import allDataJson from '@/data/all_data.json';
 
 // Transform Alnair project to our Property-like format
 function transformProject(project: any) {
@@ -50,10 +50,7 @@ export async function GET(
       );
     }
 
-    const dataPath = pathModule.join(process.cwd(), 'src/data/all_data.json');
-    const raw = fs.readFileSync(dataPath, 'utf-8');
-    const json = JSON.parse(raw);
-    const items = json?.data?.items || [];
+    const items = (allDataJson as any)?.data?.items || [];
 
     const idOrSlugStr = idOrSlug.trim();
     const isNumeric = /^\d+$/.test(idOrSlugStr);

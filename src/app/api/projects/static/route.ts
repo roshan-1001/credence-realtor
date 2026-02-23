@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pathModule from 'path';
-import fs from 'fs';
+// Import JSON at build time - ensures it works on Vercel (fs.readFileSync can fail in serverless)
+import allDataJson from '@/data/all_data.json';
 
 // Transform Alnair project to our Property-like format
 function transformProject(project: any) {
@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!, 10) : undefined;
     const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : undefined;
 
-    const dataPath = pathModule.join(process.cwd(), 'src/data/all_data.json');
-    const raw = fs.readFileSync(dataPath, 'utf-8');
-    const json = JSON.parse(raw);
-    let items = json?.data?.items || [];
+    let items = (allDataJson as any)?.data?.items || [];
 
     // Filter by locality
     if (locality) {
