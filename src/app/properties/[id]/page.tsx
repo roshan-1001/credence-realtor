@@ -221,13 +221,16 @@ export default function PropertyDetailPage() {
   }, [property]);
   
   const descriptionPreview = useMemo(() => {
-    if (!property) return '';
-    return property.description.length > 200 ? property.description.substring(0, 200) : property.description;
+    if (!property?.description) return '';
+    const raw = property.description;
+    const plain = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return plain.length > 200 ? plain.substring(0, 200) : plain;
   }, [property]);
   
   const hasMoreDescription = useMemo(() => {
-    if (!property) return false;
-    return property.description.length > 200;
+    if (!property?.description) return false;
+    const plain = property.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return plain.length > 200;
   }, [property]);
 
   // Memoize related properties section
@@ -430,7 +433,7 @@ export default function PropertyDetailPage() {
                 {/* Description with Read More - only show if description exists */}
                 {property.description && property.description.trim() !== '' && (
                   <div className="flex-1 min-h-0">
-                    <p className="text-sm md:text-base leading-relaxed text-gray-600">
+                    <p className="text-sm md:text-base leading-relaxed text-gray-600 line-clamp-3">
                       {descriptionPreview}
                       {hasMoreDescription && (
                         <>
@@ -475,11 +478,17 @@ export default function PropertyDetailPage() {
                   )}
                 </div>
 
-                {/* Price */}
+                {/* Price / Price Range */}
                 <div className="mt-auto pt-6 border-t border-gray-100">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 font-medium">Starting From</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 font-medium">
+                    {property.minPrice && property.maxPrice && property.minPrice !== property.maxPrice
+                      ? 'Price Range'
+                      : 'Starting From'}
+                  </p>
                   <p className="font-display font-bold text-3xl md:text-4xl lg:text-3xl leading-tight text-secondary">
-                    AED {formatPrice(property.price)}
+                    {property.minPrice && property.maxPrice && property.minPrice !== property.maxPrice
+                      ? `AED ${formatPrice(property.minPrice)} - ${formatPrice(property.maxPrice)}`
+                      : `AED ${formatPrice(property.price)}`}
                   </p>
                 </div>
 

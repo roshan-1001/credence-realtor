@@ -55,11 +55,18 @@ export default function DescriptionModal({ isOpen, onClose, title, description }
           </button>
         </div>
 
-        {/* Content */}
+        {/* Content - render HTML if it contains tags (from Alnair look API) */}
         <div className="p-4 md:p-6">
-          <p className="text-[#61656e] text-sm md:text-base lg:text-lg leading-relaxed whitespace-pre-wrap">
-            {description}
-          </p>
+          {description && /<[a-z][\s\S]*>/i.test(description) ? (
+            <div
+              className="text-[#61656e] text-sm md:text-base lg:text-lg leading-relaxed prose prose-p:my-2 prose-ul:my-2 prose-li:my-0 max-w-none"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          ) : (
+            <p className="text-[#61656e] text-sm md:text-base lg:text-lg leading-relaxed whitespace-pre-wrap">
+              {description}
+            </p>
+          )}
         </div>
 
         {/* Footer */}

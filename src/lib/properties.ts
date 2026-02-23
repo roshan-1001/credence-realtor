@@ -54,6 +54,8 @@ export interface Property {
   description: string;
   type: string;
   price: number;
+  minPrice?: number;
+  maxPrice?: number;
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
@@ -438,6 +440,9 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
       : String(paymentPlanValue).trim() !== '' ? String(paymentPlanValue) : undefined;
   }
 
+  const minPrice = apiProperty.min_price ?? apiProperty.price_range?.min;
+  const maxPrice = apiProperty.max_price ?? apiProperty.price_range?.max;
+
   // Build the return object, only including fields with valid values
   const property: Property = {
     id,
@@ -446,6 +451,8 @@ function mapApiPropertyToProperty(apiProperty: ApiProperty): Property {
     description,
     type,
     price,
+    minPrice: minPrice ? Number(minPrice) : undefined,
+    maxPrice: maxPrice && maxPrice !== minPrice ? Number(maxPrice) : undefined,
     location,
     city,
     locality,
@@ -679,21 +686,94 @@ export async function getAllProperties(page: number = 1, limit: number = 100): P
   }
 }
 
-// Fetch property by ID from API
-export async function getPropertyById(id: string | number): Promise<Property | null> {
+// Fetch project description from Alnair look API
+async function fetchProjectDescription(slug: string): Promise<string> {
   try {
-    const idStr = typeof id === 'number' ? id.toString() : id;
-    const apiProperty = await fetchPropertyByIdApi(idStr);
-    
-    if (apiProperty) {
-      return mapApiPropertyToProperty(apiProperty);
+    const base = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000';
+    const url = typeof window !== 'undefined' ? `/api/project/look/${encodeURIComponent(slug)}` : `${base || 'http://localhost:3000'}/api/project/look/${encodeURIComponent(slug)}`;
+    const response = await fetch(url);
+    if (!response.ok) return '';
+    const result = await response.json();
+    return result?.data?.description || '';
+  } catch {
+    return '';
+  }
+}
+
+// Map static API project to Property format
+function mapStaticProjectToProperty(data: any): Property {
+  const gallery = data.gallery || [];
+  const mainImage = data.mainImage || data.main_image || gallery[0] || '';
+  const minPrice = data.minPrice ?? data.price;
+  const maxPrice = data.maxPrice ?? data.price;
+  const price = minPrice || maxPrice || 0;
+  return {
+    id: data.id,
+    slug: data.slug,
+    title: data.title || 'Untitled',
+    description: data.description || '',
+    type: data.type || 'Off-Plan',
+    price,
+    minPrice: minPrice || undefined,
+    maxPrice: maxPrice && maxPrice !== minPrice ? maxPrice : undefined,
+    mainImage: mainImage,
+    gallery: gallery,
+    location: data.location || data.locality || '',
+    city: data.city || 'Dubai',
+    locality: data.locality || data.location || '',
+    developer: typeof data.developer === 'string' ? data.developer : data.developer?.name || '',
+    readyDate: data.readyDate || null,
+    amenities: [],
+  };
+}
+
+// Fetch property by ID - uses all_data + look API for description
+export async function getPropertyById(id: string | number): Promise<Property | null> {
+  const idStr = typeof id === 'number' ? id.toString() : String(id);
+
+  try {
+    // 1. Try static API (all_data.json) first
+    const base = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000';
+    const staticUrl = typeof window !== 'undefined' ? `/api/project/static/${encodeURIComponent(idStr)}` : `${base || 'http://localhost:3000'}/api/project/static/${encodeURIComponent(idStr)}`;
+    const staticRes = await fetch(staticUrl);
+
+    if (staticRes.ok) {
+      const staticResult = await staticRes.json();
+      const baseData = staticResult?.data;
+      if (baseData) {
+        const slug = baseData.slug;
+        let description = '';
+        if (slug) {
+          description = await fetchProjectDescription(slug);
+        }
+        const property = mapStaticProjectToProperty({
+          ...baseData,
+          description: description || baseData.description || '',
+        });
+        return property;
+      }
     }
-    
-    return null;
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') console.warn('Static API fallback:', e);
+  }
+
+  // 2. Fallback to existing API
+  try {
+    const apiProperty = await fetchPropertyByIdApi(idStr);
+    if (apiProperty) {
+      const property = mapApiPropertyToProperty(apiProperty);
+      const slug = property.slug || (typeof apiProperty.slug === 'string' ? apiProperty.slug : null);
+      if (slug) {
+        const description = await fetchProjectDescription(slug);
+        if (description) property.description = description;
+      }
+      return property;
+    }
   } catch (error) {
     console.error('Error fetching property by ID:', error);
-    return null;
   }
+
+  return null;
 }
 
 // Fetch related properties
@@ -857,12 +937,53 @@ let cachedProperties: Property[] | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Fetch paginated properties from all_data.json (static API)
+async function getPaginatedPropertiesFromStatic(
+  filters: FilterOptions = {},
+  page: number = 1,
+  limit: number = 9
+): Promise<PaginatedPropertiesResult> {
+  try {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    if (filters.locality) params.set('locality', filters.locality);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.developer) params.set('developer', filters.developer);
+    if (filters.minPrice && filters.minPrice > 0) params.set('minPrice', String(filters.minPrice));
+    if (filters.maxPrice && filters.maxPrice > 0) params.set('maxPrice', String(filters.maxPrice));
+
+    const url = `/api/projects/static?${params.toString()}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Static API error: ${response.status}`);
+    const result = await response.json();
+    if (!result.success || !Array.isArray(result.data)) {
+      return { properties: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } };
+    }
+
+    const rawItems = result.data;
+    const pagination = result.pagination || { page: 1, limit, total: 0, totalPages: 0 };
+    const properties = rawItems.map((d: any) => mapStaticProjectToProperty(d));
+    return { properties, pagination };
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') console.warn('Static properties fetch failed:', e);
+    throw e;
+  }
+}
+
 export async function getPaginatedProperties(
   filters: FilterOptions = {},
   page: number = 1,
   limit: number = 9
 ): Promise<PaginatedPropertiesResult> {
   try {
+    // Use static API (all_data.json) as primary source - supports locality, search, price range
+    try {
+      return await getPaginatedPropertiesFromStatic(filters, page, limit);
+    } catch {
+      // Fall through to Alnair find API if static fails (e.g. all_data.json missing)
+    }
+
     const apiFilters = await convertToApiFilters(filters);
     const hasDeveloperId = !!(apiFilters.developer_id);
     
